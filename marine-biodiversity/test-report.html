@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海洋生物多样性信息管理系统 - 测试报告</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f8ff; color: #333; }
+    
+    .header {
+      background: linear-gradient(135deg, #03045e, #0077b6);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 8px; }
+    .header .subtitle { font-size: 14px; opacity: 0.8; }
+    .header .meta { margin-top: 16px; font-size: 13px; opacity: 0.7; }
+    
+    .summary {
+      display: flex;
+      gap: 20px;
+      padding: 30px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .stat-box {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,119,182,0.1);
+    }
+    .stat-box .number { font-size: 48px; font-weight: 700; line-height: 1; }
+    .stat-box .label { font-size: 14px; color: #666; margin-top: 6px; }
+    .stat-box.pass .number { color: #52c41a; }
+    .stat-box.fail .number { color: #ff4d4f; }
+    .stat-box.total .number { color: #0077b6; }
+    .stat-box.rate .number { color: #13c2c2; }
+    .stat-box.time .number { color: #f77f00; font-size: 36px; }
+    
+    .content { max-width: 1200px; margin: 0 auto; padding: 0 40px 40px; }
+    
+    .section { background: white; border-radius: 12px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,119,182,0.08); }
+    
+    .section-header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      color: white;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .section-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f0f8ff; padding: 12px 16px; text-align: left; font-size: 13px; color: #666; border-bottom: 1px solid #e0f0ff; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafeff; }
+    
+    .tc-id { font-family: monospace; color: #0077b6; font-weight: 600; }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge.pass { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .badge.fail { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+    
+    .progress-bar {
+      background: #e0f0ff;
+      border-radius: 8px;
+      height: 12px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #52c41a, #73d13d);
+    }
+    
+    .env-table { padding: 24px; }
+    .env-table table td:first-child { color: #666; width: 160px; }
+    .env-table table td:last-child { font-weight: 500; }
+    
+    .footer { text-align: center; padding: 20px; color: #999; font-size: 12px; }
+    
+    .chart-row { display: flex; gap: 16px; padding: 24px; }
+    .mini-chart { flex: 1; }
+    .mini-chart-title { font-size: 13px; color: #666; margin-bottom: 8px; }
+    
+    .module-stat { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .module-name { width: 200px; font-size: 14px; color: #333; }
+    .module-bar-wrap { flex: 1; }
+    .module-count { width: 60px; text-align: right; font-size: 13px; color: #52c41a; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div style="font-size: 48px; margin-bottom: 12px">🧪</div>
+    <h1>海洋生物多样性信息管理系统</h1>
+    <p class="subtitle">自动化测试报告 · Automated Test Report</p>
+    <p class="meta">生成时间：2026年3月25日 14:17:10 &nbsp;|&nbsp; 测试框架：Vitest v1.6.1 &nbsp;|&nbsp; 环境：jsdom</p>
+  </div>
+
+  <div class="summary">
+    <div class="stat-box total">
+      <div class="number">35</div>
+      <div class="label">总测试用例</div>
+    </div>
+    <div class="stat-box pass">
+      <div class="number">35</div>
+      <div class="label">通过 ✓</div>
+    </div>
+    <div class="stat-box fail">
+      <div class="number">0</div>
+      <div class="label">失败 ✗</div>
+    </div>
+    <div class="stat-box rate">
+      <div class="number">100%</div>
+      <div class="label">通过率</div>
+    </div>
+    <div class="stat-box time">
+      <div class="number">1.30s</div>
+      <div class="label">总执行时长</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 模块概览 -->
+    <div class="section">
+      <div class="section-header">
+        <span>📊 测试模块概览</span>
+        <span class="section-badge">3个测试文件 · 4个测试套件</span>
+      </div>
+      <div style="padding: 24px">
+        <div class="module-stat">
+          <div class="module-name">🔐 用户认证模块</div>
+          <div class="module-bar-wrap">
+            <div style="font-size: 12px; color: #999; margin-bottom: 4px">auth.test.js · 8个用例</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          </div>
+          <div class="module-count">8/8</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-name">🐠 物种信息管理模块</div>
+          <div class="module-bar-wrap">
+            <div style="font-size: 12px; color: #999; margin-bottom: 4px">species.test.js · 13个用例</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          </div>
+          <div class="module-count">13/13</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-name">📍 观测记录模块</div>
+          <div class="module-bar-wrap">
+            <div style="font-size: 12px; color: #999; margin-bottom: 4px">observation.test.js · 9个用例</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          </div>
+          <div class="module-count">9/9</div>
+        </div>
+        <div class="module-stat">
+          <div class="module-name">📊 数据统计分析模块</div>
+          <div class="module-bar-wrap">
+            <div style="font-size: 12px; color: #999; margin-bottom: 4px">observation.test.js（统计套件） · 5个用例</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          </div>
+          <div class="module-count">5/5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户认证测试 -->
+    <div class="section">
+      <div class="section-header">
+        <span>🔐 模块一：用户认证模块</span>
+        <span class="section-badge">8/8 通过</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>用例编号</th><th>测试名称</th><th>测试描述</th><th>状态</th><th>耗时</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tc-id">TC-AUTH-001</td><td>管理员登录成功</td><td>管理员使用正确账号密码，验证登录成功并返回正确角色信息</td><td><span class="badge pass">✓ 通过</span></td><td>2ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-002</td><td>错误密码登录失败</td><td>使用错误密码登录，验证系统返回失败状态和错误信息</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-003</td><td>不存在用户登录失败</td><td>使用不存在的用户名登录，验证系统拒绝登录</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-004</td><td>科研人员权限验证</td><td>科研人员登录后，验证具备编辑权限但不具备管理员权限</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-005</td><td>学生角色权限限制</td><td>学生角色登录后，验证无编辑权限限制</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-006</td><td>登出功能</td><td>验证登出后用户状态完全清除，token和用户信息均置空</td><td><span class="badge pass">✓ 通过</span></td><td>2ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-007</td><td>密码不回传安全</td><td>验证登录成功的用户对象中不包含密码字段（安全性验证）</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-AUTH-008</td><td>localStorage持久化</td><td>验证登录后用户信息正确持久化到localStorage</td><td><span class="badge pass">✓ 通过</span></td><td>2ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 物种管理测试 -->
+    <div class="section">
+      <div class="section-header">
+        <span>🐠 模块二：物种信息管理模块</span>
+        <span class="section-badge">13/13 通过</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>用例编号</th><th>测试名称</th><th>测试描述</th><th>状态</th><th>耗时</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tc-id">TC-SPECIES-001</td><td>初始数据加载</td><td>验证系统初始物种数据正确加载，字段完整</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-002</td><td>添加新物种</td><td>验证新增物种功能，检查ID自动生成和时间戳记录</td><td><span class="badge pass">✓ 通过</span></td><td>2ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-003</td><td>编辑物种信息</td><td>验证物种信息编辑功能，修改字段正确更新</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-004</td><td>删除物种记录</td><td>验证物种删除功能，删除后数量减少且无法查询</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-005</td><td>按中文名搜索</td><td>验证按中文名关键词搜索，返回匹配结果</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-006</td><td>按学名搜索</td><td>验证按拉丁学名关键词搜索功能</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-007</td><td>按保护等级筛选</td><td>验证保护等级筛选，所有结果均符合筛选条件</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-008</td><td>多条件组合筛选</td><td>验证多条件AND组合筛选逻辑正确</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-009</td><td>保护等级统计</td><td>验证保护等级统计数量与实际物种总数一致</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-010</td><td>濒危状态统计</td><td>验证濒危状态统计包含所有标准IUCN等级</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-011</td><td>ID查询物种</td><td>验证根据ID精确查询物种返回正确结果</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-012</td><td>不存在ID查询</td><td>验证查询不存在的ID返回undefined（边界值测试）</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-SPECIES-013</td><td>空条件搜索</td><td>验证空条件搜索返回所有物种（全量返回）</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 观测记录测试 -->
+    <div class="section">
+      <div class="section-header">
+        <span>📍 模块三：观测记录与生态系统模块</span>
+        <span class="section-badge">9/9 通过</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>用例编号</th><th>测试名称</th><th>测试描述</th><th>状态</th><th>耗时</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tc-id">TC-OBS-001</td><td>初始观测数据加载</td><td>验证观测记录初始数据完整，包含必要字段</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-002</td><td>添加观测记录</td><td>验证新增观测记录，含完整环境参数和关联信息</td><td><span class="badge pass">✓ 通过</span></td><td>2ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-003</td><td>观测记录关联物种</td><td>验证一次观测可关联多个物种，数量和行为信息完整</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-004</td><td>编辑观测记录</td><td>验证观测记录字段可正确修改</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-005</td><td>删除观测记录</td><td>验证删除后记录消失，总数减少</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-006</td><td>生态系统数据加载</td><td>验证生态系统数据正确初始化，含名称和类型字段</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-007</td><td>环境参数记录</td><td>验证观测记录包含水温、盐度、深度等数值型环境参数</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-008</td><td>时间字段格式验证</td><td>验证所有观测记录的时间字段非空且为字符串类型</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-OBS-009</td><td>地理坐标有效性</td><td>验证经度在[-180,180]、纬度在[-90,90]有效范围内</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 统计分析测试 -->
+    <div class="section">
+      <div class="section-header">
+        <span>📊 模块四：数据统计分析模块</span>
+        <span class="section-badge">5/5 通过</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>用例编号</th><th>测试名称</th><th>测试描述</th><th>状态</th><th>耗时</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tc-id">TC-STAT-001</td><td>物种总数统计</td><td>验证speciesCount计算值与species数组length一致</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-STAT-002</td><td>观测次数统计</td><td>验证observationCount计算值与observations数组length一致</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-STAT-003</td><td>保护等级统计完整性</td><td>验证各保护等级物种数之和等于总物种数</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-STAT-004</td><td>濒危统计值类型</td><td>验证所有濒危状态统计值为非负整数</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+          <tr><td class="tc-id">TC-STAT-005</td><td>门纲统计完整性</td><td>验证各门纲物种数之和等于总物种数</td><td><span class="badge pass">✓ 通过</span></td><td>1ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 测试环境信息 -->
+    <div class="section">
+      <div class="section-header">
+        <span>🖥️ 测试环境信息</span>
+      </div>
+      <div class="env-table">
+        <table>
+          <tr><td>测试框架</td><td>Vitest v1.6.1</td></tr>
+          <tr><td>运行环境</td><td>jsdom (模拟浏览器环境)</td></tr>
+          <tr><td>Node.js版本</td><td>v20.20.1</td></tr>
+          <tr><td>操作系统</td><td>Windows 11 (win32)</td></tr>
+          <tr><td>前端框架</td><td>Vue 3 + Pinia + Vue Router 4</td></tr>
+          <tr><td>执行时间</td><td>2026-03-25 14:17:10</td></tr>
+          <tr><td>测试文件数</td><td>3个</td></tr>
+          <tr><td>测试套件数</td><td>4个</td></tr>
+          <tr><td>总测试用例</td><td>35个</td></tr>
+          <tr><td>transform耗时</td><td>96ms</td></tr>
+          <tr><td>collect耗时</td><td>540ms</td></tr>
+          <tr><td>tests耗时</td><td>35ms</td></tr>
+          <tr><td>总耗时</td><td>1.30s</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 测试结论 -->
+    <div class="section">
+      <div class="section-header">
+        <span>📝 测试结论与建议</span>
+      </div>
+      <div style="padding: 24px; line-height: 2">
+        <p style="margin-bottom: 12px"><strong>✅ 测试结论：</strong>本次自动化测试共运行 35 个测试用例，覆盖系统全部 4 个核心业务模块，<strong style="color: #52c41a">全部通过，通过率 100%</strong>。</p>
+        
+        <p style="margin-bottom: 8px"><strong>📊 覆盖情况：</strong></p>
+        <ul style="margin-left: 24px; color: #444">
+          <li><strong>模块一（用户权限）</strong>：覆盖登录、权限控制、登出、安全性等 8 个场景</li>
+          <li><strong>模块二（物种管理）</strong>：覆盖增删改查、多维度搜索筛选、统计分析等 13 个场景</li>
+          <li><strong>模块三（观测记录）</strong>：覆盖记录增删改、物种关联、坐标验证等 9 个场景</li>
+          <li><strong>模块四（统计分析）</strong>：覆盖数据统计准确性验证等 5 个场景</li>
+        </ul>
+        
+        <p style="margin-top: 12px"><strong>🔮 后续建议：</strong></p>
+        <ul style="margin-left: 24px; color: #444">
+          <li>后端对接后，需补充 API 接口集成测试（建议使用 Vitest + MSW mock）</li>
+          <li>建议增加 E2E 测试（推荐 Playwright），覆盖完整用户操作流程</li>
+          <li>建议添加地图渲染测试（Leaflet组件的生命周期测试）</li>
+          <li>建议对数据导出功能添加文件内容验证测试</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>🐬 海洋生物多样性信息管理系统 · 广东海洋大学 · 自动化测试报告</p>
+    <p style="margin-top: 4px">Generated by Vitest v1.6.1 · 2026-03-25</p>
+  </div>
+</body>
+</html>

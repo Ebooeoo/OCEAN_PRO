@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海洋生物多样性信息管理系统 — Mermaid 设计图表代码集</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f5f6fa; color: #333; }
+
+  .header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d6efd 100%);
+    color: white;
+    padding: 40px 60px;
+    text-align: center;
+  }
+  .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; }
+  .header p { font-size: 1rem; opacity: 0.85; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+  }
+
+  .nav {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 60px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .nav a {
+    display: block;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: #555;
+    font-size: 0.9rem;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav a:hover { color: #0d6efd; border-bottom-color: #0d6efd; background: #f0f7ff; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 30px; }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin: 50px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #0d6efd;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    background: #0d6efd;
+    color: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  .diagram-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+  }
+  .diagram-header {
+    padding: 16px 24px;
+    background: #f8f9fc;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .diagram-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a3a5c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #0d6efd;
+  }
+  .tag.green { background: #e6f9f0; color: #1a7a4a; }
+  .tag.orange { background: #fff4e6; color: #d06000; }
+  .tag.purple { background: #f3ecff; color: #6b21a8; }
+  .tag.red { background: #ffeaea; color: #b91c1c; }
+
+  .copy-btn {
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 18px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: background 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background: #0a58ca; }
+  .copy-btn.copied { background: #1a7a4a; }
+
+  .code-block {
+    position: relative;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 24px 28px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-block::-webkit-scrollbar { height: 6px; }
+  .code-block::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+  .desc {
+    padding: 14px 24px;
+    background: #fffbe6;
+    border-top: 1px solid #ffe58f;
+    font-size: 0.88rem;
+    color: #7a5800;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .desc::before { content: "💡"; flex-shrink: 0; }
+
+  .tip-box {
+    background: #e8f4fd;
+    border: 1px solid #bee3f8;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 30px;
+    font-size: 0.92rem;
+    color: #1a3a5c;
+    line-height: 1.8;
+  }
+  .tip-box strong { color: #0d6efd; }
+  .tip-box a { color: #0d6efd; font-weight: 600; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .summary-card {
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .summary-card .count { font-size: 2.2rem; font-weight: 700; color: #0d6efd; }
+  .summary-card .label { font-size: 0.88rem; color: #666; margin-top: 4px; }
+
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 0.85rem;
+    border-top: 1px solid #e0e0e0;
+    background: white;
+    margin-top: 60px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🐠 海洋生物多样性信息管理系统</h1>
+  <p>软件设计图表 Mermaid 代码集 — 广东海洋大学 · 软件综合实践</p>
+  <div class="badge">v2.0 · 2026-03-26 · 共 14 张图表</div>
+</div>
+
+<nav class="nav">
+  <a href="#use-case">用例图</a>
+  <a href="#architecture">架构图</a>
+  <a href="#class">类图</a>
+  <a href="#er">ER图</a>
+  <a href="#flow">流程图</a>
+  <a href="#sequence">时序图</a>
+  <a href="#state">状态图</a>
+  <a href="#mindmap">思维导图</a>
+</nav>
+
+<div class="container">
+
+  <div class="tip-box">
+    <strong>使用说明：</strong>点击每张图右上角的「复制代码」按钮 → 打开
+    <a href="https://mermaid.live" target="_blank">https://mermaid.live</a>
+    → 粘贴到左侧编辑框 → 右侧自动生成图片 → 右上角下载 PNG/SVG。<br>
+    <strong>风格说明：</strong>所有图表均参照标准 UML 规范绘制，采用黑白简洁风格，类图三栏结构，时序图含编号与 Alt 分支，流程图使用起止节点符号。
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="count">3</div><div class="label">用例图</div></div>
+    <div class="summary-card"><div class="count">2</div><div class="label">架构图</div></div>
+    <div class="summary-card"><div class="count">2</div><div class="label">类图</div></div>
+    <div class="summary-card"><div class="count">1</div><div class="label">ER 图</div></div>
+    <div class="summary-card"><div class="count">4</div><div class="label">流程图</div></div>
+    <div class="summary-card"><div class="count">4</div><div class="label">时序图</div></div>
+    <div class="summary-card"><div class="count">3</div><div class="label">状态图</div></div>
+    <div class="summary-card"><div class="count">1</div><div class="label">思维导图</div></div>
+  </div>
+
+  <!-- ===== 用例图 ===== -->
+  <h2 class="section-title" id="use-case"><span class="num">1</span>系统用例图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">用例图</span> 2.1 整体用例图 — 四类角色权限关系</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">graph LR
+    访客(("访客\n👤"))
+    学生(("学生\n👤"))
+    科研人员(("科研人员\n👤"))
+    管理员(("管理员\n👤"))
+
+    subgraph 海洋生物多样性信息管理系统
+        subgraph 用户权限管理
+            UC1([用户注册])
+            UC2([用户登录])
+            UC3([修改个人资料])
+            UC4([用户管理])
+            UC5([角色权限分配])
+        end
+        subgraph 物种信息管理
+            UC6([查询物种])
+            UC7([查看物种详情])
+            UC8([新增物种])
+            UC9([编辑物种])
+            UC10([删除物种])
+        end
+        subgraph 观测记录管理
+            UC11([查询观测记录])
+            UC12([新增观测记录])
+            UC13([编辑观测记录])
+            UC14([删除观测记录])
+            UC15([管理生态系统])
+        end
+        subgraph 可视化分析
+            UC16([查看分布地图])
+            UC17([查看统计图表])
+            UC18([查看数据看板])
+            UC19([导出数据])
+        end
+    end
+
+    访客 --> UC1
+    访客 --> UC2
+    访客 --> UC6
+    访客 --> UC7
+    访客 --> UC11
+    访客 --> UC16
+    访客 --> UC17
+    访客 --> UC18
+
+    学生 --> 访客
+    学生 --> UC3
+    学生 --> UC12
+
+    科研人员 --> 学生
+    科研人员 --> UC8
+    科研人员 --> UC9
+    科研人员 --> UC10
+    科研人员 --> UC13
+    科研人员 --> UC14
+    科研人员 --> UC15
+    科研人员 --> UC19
+
+    管理员 --> 科研人员
+    管理员 --> UC4
+    管理员 --> UC5</div>
+    <div class="desc">展示系统四类角色（访客、学生、科研人员、管理员）与所有用例的权限继承关系，包含 include/extend 子模块。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">用例图</span> 2.2 物种管理详细用例图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">graph TD
+    访客(("访客"))
+    学生(("学生"))
+    科研人员(("科研人员"))
+    管理员(("管理员"))
+
+    subgraph 物种信息管理模块
+        UC_S1([查询物种列表])
+        UC_S2([查看物种详情])
+        UC_S3([新增物种])
+        UC_S4([编辑物种信息])
+        UC_S5([删除物种])
+        UC_S6([切换视图模式])
+        UC_S7([多条件筛选])
+        UC_S8([导出物种数据])
+        UC_VAL([表单验证])
+
+        UC_S1 -. include .-> UC_S7
+        UC_S1 -. include .-> UC_S6
+        UC_S2 -. extend .-> UC_S1
+        UC_S3 -. include .-> UC_VAL
+        UC_S4 -. include .-> UC_VAL
+    end
+
+    访客 --> UC_S1
+    访客 --> UC_S2
+    学生 --> UC_S1
+    学生 --> UC_S2
+    科研人员 --> UC_S1
+    科研人员 --> UC_S3
+    科研人员 --> UC_S4
+    科研人员 --> UC_S5
+    科研人员 --> UC_S8
+    管理员 --> UC_S5</div>
+    <div class="desc">物种管理模块详细用例，包含 include（查询含筛选/切换视图、表单含验证）和 extend（详情扩展自列表）关系。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">用例图</span> 2.3 观测记录用例图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">graph LR
+    学生(("学生"))
+    科研人员(("科研人员"))
+    管理员(("管理员"))
+
+    subgraph 观测记录管理模块
+        UC_O1([查询观测记录])
+        UC_O2([新增观测记录])
+        UC_O3([编辑观测记录])
+        UC_O4([删除观测记录])
+        UC_O5([关联观测物种])
+        UC_O6([查看观测地图])
+        UC_O7([筛选观测数据])
+        UC_VAL([表单验证])
+
+        UC_O1 -. include .-> UC_O7
+        UC_O2 -. include .-> UC_O5
+        UC_O2 -. include .-> UC_VAL
+        UC_O3 -. include .-> UC_VAL
+        UC_O1 -. extend .-> UC_O6
+    end
+
+    学生 --> UC_O1
+    学生 --> UC_O2
+    科研人员 --> 学生
+    科研人员 --> UC_O3
+    科研人员 --> UC_O4
+    管理员 --> 科研人员</div>
+    <div class="desc">观测记录管理用例图，体现新增观测必须关联物种和表单验证的 include 关系。</div>
+  </div>
+
+  <!-- ===== 架构图 ===== -->
+  <h2 class="section-title" id="architecture"><span class="num">2</span>系统架构图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag green">架构图</span> 3.1 前端分层架构图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">graph TB
+    subgraph 表现层_Views["表现层（Views）"]
+        V1["Login\n登录页"]
+        V2["Dashboard\n数据看板"]
+        V3["SpeciesList\n物种列表"]
+        V4["SpeciesDetail\n物种详情"]
+        V5["SpeciesForm\n物种表单"]
+        V6["ObservationList\n观测列表"]
+        V7["ObservationForm\n观测表单"]
+        V8["MapView\n地图视图"]
+        V9["Analytics\n统计分析"]
+        V10["Ecosystems\n生态系统"]
+        V11["Users\n用户管理"]
+    end
+
+    subgraph 路由层_Router["路由层（Vue Router 4）"]
+        R1["路由配置\nroutes.js"]
+        R2["导航守卫\nbeforeEach"]
+    end
+
+    subgraph 状态层_Store["状态管理层（Pinia Store）"]
+        S1["auth.js\n用户认证状态"]
+        S2["data.js\n业务数据状态"]
+    end
+
+    subgraph UI组件层["UI 组件层"]
+        UI1["Element Plus\n基础组件库"]
+        UI2["Leaflet.js\n地图组件"]
+        UI3["ECharts 5\n图表组件"]
+    end
+
+    subgraph 数据层_Data["数据层（Mock API）"]
+        A1["mockData.js\n模拟数据"]
+        A2["物种数据集\n50+ 条"]
+        A3["观测记录数据集\n30+ 条"]
+        A4["用户数据集\n4种角色"]
+    end
+
+    V1 & V2 & V3 --> S1
+    V3 & V6 & V8 & V9 --> S2
+    S1 & S2 --> A1
+    A1 --> A2 & A3 & A4
+    R2 --> S1
+    R2 --> V1
+    V1 --> UI1
+    V8 --> UI2
+    V9 & V2 --> UI3</div>
+    <div class="desc">清晰展示前端表现层→路由层→状态管理层→UI组件层→数据层的纵向依赖关系。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag green">架构图</span> 3.2 系统组件依赖图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">graph TB
+    subgraph 前端浏览器端
+        subgraph "核心框架"
+            VUE["Vue 3\n组合式API / setup()"]
+            VITE["Vite\n构建 & 热更新"]
+        end
+
+        subgraph "UI & 交互"
+            EP["Element Plus\nUI组件库"]
+            LEAFLET["Leaflet.js\n地理地图"]
+            ECHARTS["ECharts 5\n数据图表"]
+        end
+
+        subgraph "状态 & 路由"
+            PINIA["Pinia\n全局状态管理"]
+            VR["Vue Router 4\n路由 & 权限守卫"]
+        end
+
+        subgraph "测试"
+            VITEST["Vitest\n单元测试框架"]
+        end
+    end
+
+    subgraph "可扩展后端（当前 Mock）"
+        SB["Spring Boot 3\nREST API"]
+        MP["MyBatis-Plus\nORM"]
+        SS["Spring Security + JWT\n认证授权"]
+        MYSQL["MySQL 8\n数据库"]
+    end
+
+    VUE --> EP & PINIA & VR & LEAFLET & ECHARTS
+    VUE --> VITE
+    VITEST --> VUE
+    VUE -.->|HTTP / REST API| SB
+    SB --> MP & SS
+    MP --> MYSQL</div>
+    <div class="desc">完整技术栈依赖关系，前端各库以 Vue3 为核心，通过虚线 REST API 连接可扩展的 Spring Boot 后端。</div>
+  </div>
+
+  <!-- ===== 类图 ===== -->
+  <h2 class="section-title" id="class"><span class="num">3</span>类图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag orange">类图</span> 4.1 核心数据模型类图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">classDiagram
+    class User {
+        +int id
+        +String username
+        +String password
+        +String email
+        +String role
+        +String avatar
+        +Date createdAt
+        +login(username, password) Boolean
+        +logout() void
+        +updateProfile(data) void
+        +hasPermission(action) Boolean
+    }
+
+    class Species {
+        +int id
+        +String chineseName
+        +String latinName
+        +String phylum
+        +String class_
+        +String order_
+        +String family
+        +String genus
+        +String conservationLevel
+        +String endangeredStatus
+        +String morphology
+        +String habitat
+        +String distribution
+        +String imageUrl
+        +String references
+        +Date createdAt
+        +String createdBy
+        +validate() Boolean
+        +toCard() Object
+    }
+
+    class Observation {
+        +int id
+        +Date observationTime
+        +String location
+        +float latitude
+        +float longitude
+        +String ecosystem
+        +String weather
+        +float waterTemp
+        +float salinity
+        +float visibility
+        +float depth
+        +String description
+        +String observer
+        +List~int~ speciesIds
+        +addSpecies(speciesId) void
+        +removeSpecies(speciesId) void
+        +validate() Boolean
+    }
+
+    class Ecosystem {
+        +int id
+        +String name
+        +String type
+        +String description
+        +String location
+        +float area
+        +String healthStatus
+        +int speciesCount
+        +int observationCount
+    }
+
+    class AuthStore {
+        +User currentUser
+        +String token
+        +Boolean isLoggedIn
+        +login(credentials) Promise
+        +logout() void
+        +hasPermission(action) Boolean
+        +isAdmin() Boolean
+        +isResearcher() Boolean
+    }
+
+    class DataStore {
+        +List~Species~ species
+        +List~Observation~ observations
+        +List~Ecosystem~ ecosystems
+        +List~User~ users
+        +addSpecies(data) void
+        +updateSpecies(id, data) void
+        +deleteSpecies(id) void
+        +addObservation(data) void
+        +updateObservation(id, data) void
+        +deleteObservation(id) void
+        +getSpeciesById(id) Species
+        +searchSpecies(filters) List~Species~
+    }
+
+    AuthStore "1" --> "1" User : 管理当前用户
+    DataStore "1" --> "*" Species : 管理物种数据
+    DataStore "1" --> "*" Observation : 管理观测记录
+    DataStore "1" --> "*" Ecosystem : 管理生态系统
+    DataStore "1" --> "*" User : 管理用户列表
+    Observation "*" --> "*" Species : 包含观测到的物种
+    Observation "*" --> "1" Ecosystem : 属于某生态系统</div>
+    <div class="desc">标准三栏UML类图结构（类名/属性/方法），展示核心业务实体及其关联多重性（1对多、多对多）。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag orange">类图</span> 4.2 前端组件类图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">classDiagram
+    class App {
+        +setup() void
+        +onMounted() void
+    }
+
+    class Layout {
+        +Boolean collapsed
+        +List menuItems
+        +handleLogout() void
+        +toggleSidebar() void
+        +checkPermission(route) Boolean
+    }
+
+    class SpeciesList {
+        +List species
+        +Boolean loading
+        +String viewMode
+        +Object searchForm
+        +int currentPage
+        +int pageSize
+        +loadSpecies() void
+        +handleSearch() void
+        +handleDelete(id) void
+        +handleExport() void
+        +switchView(mode) void
+    }
+
+    class SpeciesForm {
+        +Object form
+        +Object rules
+        +Boolean isEdit
+        +handleSubmit() void
+        +handleImageUpload() void
+        +validateForm() Boolean
+        +resetForm() void
+    }
+
+    class ObservationList {
+        +List observations
+        +Boolean loading
+        +Object searchForm
+        +loadObservations() void
+        +handleSearch() void
+        +handleDelete(id) void
+    }
+
+    class ObservationForm {
+        +Object form
+        +Object rules
+        +List selectedSpecies
+        +Boolean isEdit
+        +handleSubmit() void
+        +handleSpeciesSelect(id) void
+        +validateForm() Boolean
+    }
+
+    class MapView {
+        +Object map
+        +List markers
+        +String selectedType
+        +initMap() void
+        +addMarkers(data) void
+        +handleMarkerClick(item) void
+        +clearMarkers() void
+    }
+
+    class Analytics {
+        +Object pieChart
+        +Object barChart
+        +Object lineChart
+        +initCharts() void
+        +updateCharts() void
+        +resizeCharts() void
+    }
+
+    class Dashboard {
+        +Object stats
+        +List recentSpecies
+        +List recentObservations
+        +loadStats() void
+    }
+
+    App --> Layout
+    Layout --> SpeciesList
+    Layout --> ObservationList
+    Layout --> MapView
+    Layout --> Analytics
+    Layout --> Dashboard
+    SpeciesList --> SpeciesForm : 跳转编辑/新增
+    ObservationList --> ObservationForm : 跳转编辑/新增</div>
+    <div class="desc">Vue3 前端组件层级关系，App → Layout → 各页面组件，与图片中 jsp.ESM 模块图风格对应。</div>
+  </div>
+
+  <!-- ===== ER图 ===== -->
+  <h2 class="section-title" id="er"><span class="num">4</span>ER 实体关系图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag purple">ER图</span> 5.1 数据库实体关系图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">erDiagram
+    USER {
+        int id PK
+        string username
+        string password_hash
+        string email
+        string role
+        string avatar
+        datetime created_at
+        datetime updated_at
+    }
+
+    SPECIES {
+        int id PK
+        string chinese_name
+        string latin_name
+        string phylum
+        string class
+        string order_name
+        string family
+        string genus
+        string conservation_level
+        string endangered_status
+        text morphology
+        text habitat
+        text distribution
+        string image_url
+        text references
+        int created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    OBSERVATION {
+        int id PK
+        datetime observation_time
+        string location
+        float latitude
+        float longitude
+        int ecosystem_id FK
+        string weather
+        float water_temp
+        float salinity
+        float visibility
+        float depth
+        text description
+        int observer_id FK
+        datetime created_at
+    }
+
+    ECOSYSTEM {
+        int id PK
+        string name
+        string type
+        text description
+        string location
+        float area
+        string health_status
+        datetime created_at
+    }
+
+    OBSERVATION_SPECIES {
+        int observation_id FK
+        int species_id FK
+        int count
+        string notes
+    }
+
+    USER ||--o{ SPECIES : "创建(created_by)"
+    USER ||--o{ OBSERVATION : "记录(observer_id)"
+    ECOSYSTEM ||--o{ OBSERVATION : "包含(ecosystem_id)"
+    OBSERVATION ||--o{ OBSERVATION_SPECIES : "关联"
+    SPECIES ||--o{ OBSERVATION_SPECIES : "被观测"</div>
+    <div class="desc">标准ER图，含主外键标注，OBSERVATION_SPECIES 为多对多关联中间表，关系线标注语义描述。</div>
+  </div>
+
+  <!-- ===== 流程图 ===== -->
+  <h2 class="section-title" id="flow"><span class="num">5</span>流程图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag red">流程图</span> 6.1 用户登录流程图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">flowchart TD
+    S(["●\n开始"]) --> A["用户打开系统"]
+    A --> B{"是否已登录?"}
+    B -->|是| C["跳转到数据看板"]
+    C --> E2(["⊗\n结束"])
+    B -->|否| D["显示登录页面"]
+    D --> E["输入用户名和密码"]
+    E --> F["点击登录按钮"]
+    F --> G{"前端表单验证"}
+    G -->|验证失败| H["标红提示输入错误"]
+    H --> E
+    G -->|验证通过| I["调用 AuthStore.login()"]
+    I --> J{"查询用户信息\n校验账号密码"}
+    J -->|"用户名或密码错误"| K["提示：登录失败"]
+    K --> E
+    J -->|认证成功| L["生成模拟 Token"]
+    L --> M["保存用户信息到 Store"]
+    M --> N["写入 localStorage"]
+    N --> O["路由跳转 /dashboard"]
+    O --> E3(["⊗\n结束"])</div>
+    <div class="desc">使用实心圆●表示开始，⊗ 表示结束（参照图片规范），菱形表示判断，矩形表示操作步骤。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag red">流程图</span> 6.2 物种信息管理流程图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">flowchart TD
+    S(["●\n开始"]) --> A["进入物种列表页"]
+    A --> B["加载并展示物种列表"]
+    B --> C{"用户操作选择"}
+
+    C -->|"搜索 / 筛选"| D["输入搜索条件"]
+    D --> E["过滤物种数据"]
+    E --> F["更新列表显示"]
+    F --> C
+
+    C -->|"查看详情"| G["跳转物种详情页"]
+    G --> H["展示完整信息"]
+    H --> C
+
+    C -->|"新增 / 编辑物种"| I{"权限校验"}
+    I -->|无权限| J["提示：权限不足"]
+    J --> C
+    I -->|有权限| K["打开物种表单"]
+    K --> L["填写物种信息"]
+    L --> M{"表单验证"}
+    M -->|验证失败| N["标红错误字段\n提示填写说明"]
+    N --> L
+    M -->|验证通过| O["保存物种数据"]
+    O --> P["提示：保存成功"]
+    P --> C
+
+    C -->|"删除物种"| Q{"权限校验"}
+    Q -->|无权限| J
+    Q -->|有权限| R["弹出确认对话框"]
+    R -->|取消| C
+    R -->|确认删除| T["执行删除操作"]
+    T --> U["提示：删除成功"]
+    U --> C
+
+    C -->|"退出"| E2(["⊗\n结束"])</div>
+    <div class="desc">物种管理完整业务流程，包含搜索、查看、新增/编辑、删除四类操作路径及权限判断分支。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag red">流程图</span> 6.3 观测记录新增流程图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">flowchart TD
+    S(["●\n开始"]) --> A["进入观测记录列表"]
+    A --> B["点击新增观测记录"]
+    B --> C{"检查登录状态"}
+    C -->|未登录| D["跳转登录页完成登录"]
+    D --> B
+    C -->|已登录| E["打开观测记录表单"]
+
+    E --> F["填写基本信息\n时间 / 地点 / 经纬度"]
+    F --> G["选择生态系统类型"]
+    G --> H["填写环境参数\n水温 / 盐度 / 能见度 / 深度"]
+    H --> I["关联观测到的物种"]
+    I --> I1["搜索物种名称"]
+    I1 --> I2["选择物种加入关联列表"]
+    I2 --> I3{"继续添加物种?"}
+    I3 -->|是| I1
+    I3 -->|否| J["填写观测描述文字"]
+
+    J --> K["点击提交"]
+    K --> L{"表单验证"}
+    L -->|验证失败| M["标红错误字段\n提示必填项"]
+    M --> F
+    L -->|验证通过| N["保存观测记录"]
+    N --> O["更新地图标记点"]
+    O --> P["提示：保存成功"]
+    P --> Q["跳转回列表页"]
+    Q --> R(["⊗\n结束"])</div>
+    <div class="desc">观测记录新增流程，重点体现「关联观测物种」的循环添加步骤，以及表单验证失败回退路径。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag red">流程图</span> 6.4 系统总体业务流程图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">flowchart LR
+    subgraph 数据采集来源
+        A1["实地观测\n科研人员/学生"]
+        A2["物种标本\n形态描述"]
+        A3["历史资料\n文献引用"]
+    end
+
+    subgraph 数据录入层
+        B1["物种信息录入\nSpeciesForm"]
+        B2["观测记录录入\nObservationForm"]
+        B3["生态系统维护\nEcosystems"]
+    end
+
+    subgraph 数据存储层
+        C1[("物种数据库\nSPECIES")]
+        C2[("观测记录库\nOBSERVATION")]
+        C3[("生态系统库\nECOSYSTEM")]
+    end
+
+    subgraph 数据处理层
+        D1["数据检索\n多条件过滤"]
+        D2["统计分析\n汇总计算"]
+        D3["地理信息处理\n坐标聚合"]
+    end
+
+    subgraph 数据展示层
+        E1["物种详情页\nSpeciesDetail"]
+        E2["统计图表\nAnalytics"]
+        E3["分布地图\nMapView"]
+        E4["数据看板\nDashboard"]
+    end
+
+    A1 --> B2
+    A2 --> B1
+    A3 --> B1
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    C1 --> D1 & D2 & D3
+    C2 --> D1 & D2 & D3
+    C3 --> D1 & D3
+    D1 --> E1
+    D2 --> E2 & E4
+    D3 --> E3</div>
+    <div class="desc">系统整体数据流向，从数据采集→录入→存储→处理→展示的完整纵向流程，使用泳道子图分层展示。</div>
+  </div>
+
+  <!-- ===== 时序图 ===== -->
+  <h2 class="section-title" id="sequence"><span class="num">6</span>时序图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">时序图</span> 7.1 用户登录时序图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">sequenceDiagram
+    actor 用户 as : User
+    participant 登录页面 as Login.vue
+    participant 认证模块 as AuthStore
+    participant 模拟数据 as MockAPI
+    participant 路由模块 as Vue Router
+
+    用户 ->> 登录页面: 1: 输入用户名 + 密码
+    用户 ->> 登录页面: 2: Click 登录
+
+    登录页面 ->> 登录页面: 3: 前端表单验证
+
+    alt 验证失败
+        登录页面 -->> 用户: 3.1: 提示输入错误
+    else 验证通过
+        登录页面 ->> 认证模块: 4: login(username, password)
+        认证模块 ->> 模拟数据: 5: 查询用户列表
+        模拟数据 -->> 认证模块: 5.1: 返回用户数组
+
+        认证模块 ->> 认证模块: 6: 校验账号密码
+
+        alt 认证失败
+            认证模块 -->> 登录页面: 6.1: 返回错误信息
+            登录页面 -->> 用户: 6.2: 显示登录失败提示
+        else 认证成功
+            认证模块 ->> 认证模块: 7: 生成模拟 Token
+            认证模块 ->> 认证模块: 8: 保存用户信息到 Store
+            认证模块 -->> 登录页面: 9: 返回成功
+            登录页面 ->> 路由模块: 10: push('/dashboard')
+            路由模块 -->> 用户: 11: 跳转到数据看板
+        end
+    end</div>
+    <div class="desc">使用编号消息、虚线返回箭头、Alt 分支（参照图片中时序图规范），区分实线调用和虚线返回。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">时序图</span> 7.2 新增物种时序图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">sequenceDiagram
+    actor 科研人员 as : 科研人员
+    participant 物种列表 as SpeciesList.vue
+    participant 认证模块 as AuthStore
+    participant 物种表单 as SpeciesForm.vue
+    participant 数据模块 as DataStore
+
+    科研人员 ->> 物种列表: 1: Click 新增物种
+
+    物种列表 ->> 认证模块: 2: hasPermission('create')
+    认证模块 -->> 物种列表: 2.1: 返回 true
+
+    物种列表 ->> 物种表单: 3: 路由跳转到新增页面
+
+    科研人员 ->> 物种表单: 4: 填写物种详细信息
+    科研人员 ->> 物种表单: 5: Click 保存
+
+    物种表单 ->> 物种表单: 6: 前端表单验证
+
+    alt 验证失败
+        物种表单 -->> 科研人员: 6.1: 提示填写错误
+    else 验证通过
+        物种表单 ->> 数据模块: 7: addSpecies(formData)
+        数据模块 ->> 数据模块: 7.1: 生成唯一 ID
+        数据模块 ->> 数据模块: 7.2: 记录创建者和时间
+        数据模块 ->> 数据模块: 7.3: 写入物种列表
+        数据模块 -->> 物种表单: 8: 返回新物种对象
+        物种表单 -->> 科研人员: 9: 提示「添加成功」
+        物种表单 ->> 物种列表: 10: 路由返回列表页
+        物种列表 ->> 数据模块: 11: 重新加载物种数据
+        数据模块 -->> 物种列表: 11.1: 返回最新列表
+        物种列表 -->> 科研人员: 12: 显示更新后的物种列表
+    end</div>
+    <div class="desc">含权限检查→表单填写→验证→保存的完整流程，Alt 分支区分验证失败和成功两种路径。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">时序图</span> 7.3 查询物种时序图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">sequenceDiagram
+    actor 用户 as : User
+    participant 物种列表 as SpeciesList.vue
+    participant 数据模块 as DataStore
+    participant 模拟数据 as MockData
+
+    用户 ->> 物种列表: 1: 打开物种列表页
+    物种列表 ->> 数据模块: 2: 获取物种数据
+    数据模块 ->> 模拟数据: 2.1: 读取 mockData
+    模拟数据 -->> 数据模块: 2.2: 返回物种数组
+    数据模块 -->> 物种列表: 2.3: 返回物种列表
+    物种列表 -->> 用户: 3: 展示物种卡片列表
+
+    用户 ->> 物种列表: 4: 输入搜索关键词 / 选择筛选条件
+    物种列表 ->> 数据模块: 5: searchSpecies(filters)
+    数据模块 ->> 数据模块: 5.1: 过滤匹配物种数据
+    数据模块 -->> 物种列表: 5.2: 返回过滤结果
+    物种列表 -->> 用户: 6: 更新列表显示
+
+    用户 ->> 物种列表: 7: 点击某物种卡片
+    物种列表 ->> 数据模块: 8: getSpeciesById(id)
+    数据模块 -->> 物种列表: 8.1: 返回物种详情对象
+    物种列表 -->> 用户: 9: 跳转到物种详情页</div>
+    <div class="desc">包含初始加载、搜索过滤、查看详情三段交互流程，消息编号连续清晰。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag">时序图</span> 7.4 删除物种时序图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">sequenceDiagram
+    actor 管理员 as : 管理员
+    participant 物种列表 as SpeciesList.vue
+    participant 认证模块 as AuthStore
+    participant 确认弹窗 as ElMessageBox
+    participant 数据模块 as DataStore
+
+    管理员 ->> 物种列表: 1: Click 删除按钮
+    物种列表 ->> 认证模块: 2: hasPermission('delete')
+    认证模块 -->> 物种列表: 2.1: 返回 true
+
+    物种列表 ->> 确认弹窗: 3: 弹出确认对话框
+
+    alt 点击取消
+        确认弹窗 -->> 管理员: 3.1: 关闭弹窗，取消操作
+    else 点击确认
+        确认弹窗 -->> 物种列表: 4: 用户确认删除
+        物种列表 ->> 数据模块: 5: deleteSpecies(id)
+        数据模块 ->> 数据模块: 5.1: 从列表中移除数据
+        数据模块 -->> 物种列表: 6: 返回操作结果
+        物种列表 -->> 管理员: 7: 提示「删除成功」
+        物种列表 ->> 物种列表: 8: 刷新列表显示
+    end</div>
+    <div class="desc">删除操作含权限验证→确认弹窗二次确认→执行删除三步，Alt 分支对应取消和确认两种用户选择。</div>
+  </div>
+
+  <!-- ===== 状态图 ===== -->
+  <h2 class="section-title" id="state"><span class="num">7</span>状态图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag green">状态图</span> 8.1 用户登录状态图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">stateDiagram-v2
+    [*] --> 未登录状态
+
+    未登录状态 --> 登录验证中 : 提交登录表单
+    登录验证中 --> 未登录状态 : 认证失败 / 密码错误
+    登录验证中 --> 已登录状态 : 认证成功
+
+    state 已登录状态 {
+        [*] --> 判断角色
+        判断角色 --> 管理员模式 : role = admin
+        判断角色 --> 科研人员模式 : role = researcher
+        判断角色 --> 学生模式 : role = student
+        判断角色 --> 访客模式 : role = public
+    }
+
+    已登录状态 --> 未登录状态 : 主动退出登录
+    已登录状态 --> 未登录状态 : Token 过期自动跳出
+
+    未登录状态 --> [*] : 关闭系统</div>
+    <div class="desc">含嵌套状态（已登录内部按角色分支），展示登录态生命周期的完整转换。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag green">状态图</span> 8.2 物种信息状态图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">stateDiagram-v2
+    [*] --> 草稿状态 : 科研人员新建物种
+
+    草稿状态 --> 待审核 : 提交物种信息
+    待审核 --> 已发布 : 管理员审核通过
+    待审核 --> 草稿状态 : 管理员驳回，退回修改
+
+    已发布 --> 编辑中 : 科研人员/管理员发起编辑
+    编辑中 --> 已发布 : 保存修改完成
+
+    已发布 --> 已删除 : 管理员执行删除
+    草稿状态 --> 已删除 : 管理员直接删除
+
+    已删除 --> [*]</div>
+    <div class="desc">物种数据从草稿→审核→发布→编辑→删除的完整生命周期状态转换图。</div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag green">状态图</span> 8.3 观测记录状态图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">stateDiagram-v2
+    [*] --> 填写中 : 用户点击新增
+
+    填写中 --> 提交验证 : 点击提交按钮
+    提交验证 --> 填写中 : 表单验证失败，返回修改
+    提交验证 --> 已保存 : 验证通过，保存成功
+
+    已保存 --> 编辑中 : 用户/管理员点击编辑
+    编辑中 --> 提交验证 : 保存修改
+    编辑中 --> 已保存 : 取消编辑
+
+    已保存 --> 已删除 : 执行删除操作
+
+    已删除 --> [*]</div>
+    <div class="desc">观测记录状态机，含填写→验证→保存→编辑→删除的完整转换，验证失败可回退。</div>
+  </div>
+
+  <!-- ===== 思维导图 ===== -->
+  <h2 class="section-title" id="mindmap"><span class="num">8</span>系统功能思维导图</h2>
+
+  <div class="diagram-card">
+    <div class="diagram-header">
+      <h3><span class="tag purple">思维导图</span> 9.1 系统功能全景思维导图</h3>
+      <button class="copy-btn" onclick="copyCode(this)">复制代码</button>
+    </div>
+    <div class="code-block">mindmap
+  root((海洋生物多样性\n信息管理系统))
+    用户权限模块
+      登录注册
+      RBAC角色控制
+        管理员
+        科研人员
+        学生
+        访客
+      个人资料管理
+      用户列表管理
+    物种信息模块
+      物种列表
+        卡片视图
+        表格视图
+        多条件搜索
+      物种详情页
+        分类学信息
+        形态描述
+        地理分布
+      物种表单
+        新增物种
+        编辑物种
+        表单验证
+    观测记录模块
+      观测列表
+        时间筛选
+        地点筛选
+        物种筛选
+      观测表单
+        环境参数录入
+        物种关联选择
+      生态系统管理
+        珊瑚礁
+        红树林
+        海草床
+        深海区域
+    可视化分析模块
+      数据看板
+        统计卡片
+        近期数据
+      地图展示
+        物种分布图
+        观测地点图
+      统计图表
+        物种门类饼图
+        保护等级柱状图
+        月度观测折线图
+      数据导出CSV</div>
+    <div class="desc">系统功能全景导图，覆盖用户权限、物种信息、观测记录、可视化分析四大模块所有子功能。</div>
+  </div>
+
+</div>
+
+<footer>
+  海洋生物多样性信息管理系统 · 软件设计文档 v2.0 · 广东海洋大学 · 2026-03-26<br>
+  所有图表代码可在 <a href="https://mermaid.live" target="_blank" style="color:#0d6efd;">mermaid.live</a> 直接运行生成图片
+</footer>
+
+<script>
+function copyCode(btn) {
+  const card = btn.closest('.diagram-card');
+  const code = card.querySelector('.code-block').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '复制代码';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '复制代码';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
