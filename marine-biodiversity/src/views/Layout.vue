@@ -7,7 +7,7 @@
         <span class="logo-emoji">🐬</span>
         <span v-show="!isCollapsed" class="logo-text">海洋生物系统</span>
       </div>
-      
+
       <!-- 导航菜单 -->
       <el-menu
         :default-active="$route.path"
@@ -19,48 +19,121 @@
         text-color="#caf0f8"
         active-text-color="#ffffff"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><DataBoard /></el-icon>
-          <template #title>数据看板</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/species">
-          <el-icon>🐠</el-icon>
-          <template #title>物种管理</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/observations">
-          <el-icon><Location /></el-icon>
-          <template #title>观测记录</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/ecosystems">
-          <el-icon><Sugar /></el-icon>
-          <template #title>生态系统</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/map">
-          <el-icon><MapLocation /></el-icon>
-          <template #title>分布地图</template>
-        </el-menu-item>
-        
-        <el-menu-item index="/analytics">
-          <el-icon><TrendCharts /></el-icon>
-          <template #title>统计分析</template>
-        </el-menu-item>
-        
-        <el-menu-item v-if="authStore.isAdmin" index="/users">
-          <el-icon><UserFilled /></el-icon>
-          <template #title>用户管理</template>
-        </el-menu-item>
+        <!-- ===== 管理员：精简菜单 ===== -->
+        <template v-if="authStore.isAdmin">
+          <el-menu-item index="/dashboard">
+            <el-icon><DataBoard /></el-icon>
+            <template #title>数据看板</template>
+          </el-menu-item>
+          <el-menu-item index="/analytics">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>统计分析</template>
+          </el-menu-item>
+          <el-menu-item index="/users">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>用户管理</template>
+          </el-menu-item>
+        </template>
+
+        <!-- ===== 科研人员：完整菜单 + 审批入口 ===== -->
+        <template v-else-if="authStore.user?.role === 'researcher'">
+          <el-menu-item index="/dashboard">
+            <el-icon><DataBoard /></el-icon>
+            <template #title>数据看板</template>
+          </el-menu-item>
+          <el-menu-item index="/species">
+            <el-icon>🐠</el-icon>
+            <template #title>物种管理</template>
+          </el-menu-item>
+          <el-menu-item index="/observations">
+            <el-icon><Location /></el-icon>
+            <template #title>观测记录</template>
+          </el-menu-item>
+          <!-- 待审批观测 -->
+          <el-menu-item index="/observations/pending">
+            <el-icon><Bell /></el-icon>
+            <template #title>
+              观测审批
+              <el-badge v-if="pendingCount > 0" :value="pendingCount" class="menu-badge" />
+            </template>
+          </el-menu-item>
+          <el-menu-item index="/ecosystems">
+            <el-icon><Sugar /></el-icon>
+            <template #title>生态系统</template>
+          </el-menu-item>
+          <el-menu-item index="/map">
+            <el-icon><MapLocation /></el-icon>
+            <template #title>分布地图</template>
+          </el-menu-item>
+          <el-menu-item index="/analytics">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>统计分析</template>
+          </el-menu-item>
+        </template>
+
+        <!-- ===== 学生：物种大全 + 可新增观测 ===== -->
+        <template v-else-if="authStore.user?.role === 'student'">
+          <el-menu-item index="/dashboard">
+            <el-icon><DataBoard /></el-icon>
+            <template #title>数据看板</template>
+          </el-menu-item>
+          <el-menu-item index="/species">
+            <el-icon>🐠</el-icon>
+            <template #title>物种大全</template>
+          </el-menu-item>
+          <el-menu-item index="/observations">
+            <el-icon><Location /></el-icon>
+            <template #title>观测记录</template>
+          </el-menu-item>
+          <el-menu-item index="/ecosystems">
+            <el-icon><Sugar /></el-icon>
+            <template #title>生态系统</template>
+          </el-menu-item>
+          <el-menu-item index="/map">
+            <el-icon><MapLocation /></el-icon>
+            <template #title>分布地图</template>
+          </el-menu-item>
+          <el-menu-item index="/analytics">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>统计分析</template>
+          </el-menu-item>
+        </template>
+
+        <!-- ===== 公众/访客：物种大全（只读） ===== -->
+        <template v-else>
+          <el-menu-item index="/dashboard">
+            <el-icon><DataBoard /></el-icon>
+            <template #title>数据看板</template>
+          </el-menu-item>
+          <el-menu-item index="/species">
+            <el-icon>🐠</el-icon>
+            <template #title>物种大全</template>
+          </el-menu-item>
+          <el-menu-item index="/observations">
+            <el-icon><Location /></el-icon>
+            <template #title>观测记录</template>
+          </el-menu-item>
+          <el-menu-item index="/ecosystems">
+            <el-icon><Sugar /></el-icon>
+            <template #title>生态系统</template>
+          </el-menu-item>
+          <el-menu-item index="/map">
+            <el-icon><MapLocation /></el-icon>
+            <template #title>分布地图</template>
+          </el-menu-item>
+          <el-menu-item index="/analytics">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>统计分析</template>
+          </el-menu-item>
+        </template>
       </el-menu>
-      
+
       <!-- 折叠按钮 -->
       <div class="collapse-btn" @click="isCollapsed = !isCollapsed">
         <el-icon><component :is="isCollapsed ? 'Expand' : 'Fold'" /></el-icon>
       </div>
     </el-aside>
-    
+
     <!-- 主内容区 -->
     <el-container>
       <!-- 顶部栏 -->
@@ -71,13 +144,13 @@
             <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        
+
         <div class="header-right">
           <!-- 通知 -->
-          <el-badge :value="3" class="notification-badge">
+          <el-badge :value="pendingCount || undefined" class="notification-badge">
             <el-button :icon="Bell" circle size="small" />
           </el-badge>
-          
+
           <!-- 用户信息 -->
           <el-dropdown @command="handleCommand" trigger="click">
             <div class="user-info">
@@ -101,7 +174,7 @@
           </el-dropdown>
         </div>
       </el-header>
-      
+
       <!-- 页面内容 -->
       <el-main class="main-content">
         <router-view v-slot="{ Component }">
@@ -118,7 +191,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Bell, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
+import { Bell, ArrowDown, User, SwitchButton, DataBoard, Location, TrendCharts, UserFilled, MapLocation, Sugar } from '@element-plus/icons-vue'
 import { useAuthStore } from '../store/auth.js'
 import { useDataStore } from '../store/data.js'
 
@@ -127,11 +200,27 @@ const route = useRoute()
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const isCollapsed = ref(false)
+const pendingCount = ref(0)
 
-// 进入布局时自动从后端加载全部数据
-onMounted(() => {
-  dataStore.loadAll()
+onMounted(async () => {
+  await dataStore.loadAll()
+  // 科研人员：拉取待审批数量
+  if (authStore.user?.role === 'researcher') {
+    fetchPendingCount()
+  }
 })
+
+async function fetchPendingCount() {
+  try {
+    const token = localStorage.getItem('marine_token')
+    const res = await fetch(
+      (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api') + '/observations/pending/count',
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    const json = await res.json()
+    if (json.success) pendingCount.value = json.count || 0
+  } catch {}
+}
 
 const currentTitle = computed(() => route.meta.title || '')
 
@@ -212,6 +301,14 @@ const handleCommand = (command) => {
 
 .sidebar-menu :deep(.el-menu-item:hover) {
   background: rgba(144, 224, 239, 0.1) !important;
+}
+
+.menu-badge {
+  margin-left: 4px;
+}
+
+.menu-badge :deep(.el-badge__content) {
+  top: 4px;
 }
 
 .collapse-btn {

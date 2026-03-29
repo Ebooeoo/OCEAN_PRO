@@ -39,7 +39,12 @@ export const observationsAPI = {
   getById: (id) => request('GET', `/observations/${id}`),
   create: (data) => request('POST', '/observations', data),
   update: (id, data) => request('PUT', `/observations/${id}`, data),
-  delete: (id) => request('DELETE', `/observations/${id}`)
+  delete: (id) => request('DELETE', `/observations/${id}`),
+  // 审批相关（科研人员/管理员）
+  getPending: () => request('GET', '/observations/pending'),
+  getPendingCount: () => request('GET', '/observations/pending/count'),
+  approve: (id, remark) => request('POST', `/observations/${id}/approve`, { remark }),
+  reject: (id, remark) => request('POST', `/observations/${id}/reject`, { remark })
 }
 
 // ===== 生态系统 API =====

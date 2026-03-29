@@ -11,6 +11,7 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (state) => !!state.user,
     isAdmin: (state) => state.user?.role === 'admin',
     isResearcher: (state) => ['admin', 'researcher'].includes(state.user?.role),
+    isStudent: (state) => state.user?.role === 'student',
     canEdit: (state) => ['admin', 'researcher'].includes(state.user?.role),
     roleName: (state) => {
       const roleMap = { admin: '管理员', researcher: '科研人员', student: '学生', public: '访客' }

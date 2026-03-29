@@ -57,7 +57,13 @@ const routes = [
         path: 'observations/add',
         name: 'ObservationAdd',
         component: () => import('../views/observation/ObservationForm.vue'),
-        meta: { title: '新增观测', requiresRole: ['admin', 'researcher'] }
+        meta: { title: '新增观测', requiresRole: ['admin', 'researcher', 'student'] }
+      },
+      {
+        path: 'observations/pending',
+        name: 'ObservationPending',
+        component: () => import('../views/observation/ObservationPending.vue'),
+        meta: { title: '观测审批', requiresRole: ['admin', 'researcher'] }
       },
       {
         path: 'observations/:id',
