@@ -110,11 +110,11 @@ router.post('/', requireAuth, requireRole('admin', 'researcher'), async (req, re
     const createdBy = req.user.name || req.user.username
     const [result] = await pool.query(`
       INSERT INTO species
-        (chinese_name, latin_name, phylum, class, \`order\`, family, genus, species,
+        (chinese_name, latin_name, phylum, class, "order", family, genus, species,
          morphology, habits, distribution, longitude, latitude,
          protection_level, endangered_status, image_url, video_url, references_text,
          created_by, created_at, status)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURDATE(),1)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_DATE,1) RETURNING id
     `, [
       d.chineseName, d.latinName, d.phylum, d.class, d.order, d.family, d.genus, d.species,
       d.morphology, d.habits, d.distribution, d.longitude || null, d.latitude || null,
@@ -139,7 +139,7 @@ router.put('/:id', requireAuth, requireRole('admin', 'researcher'), async (req, 
     const d = req.body
     await pool.query(`
       UPDATE species SET
-        chinese_name=?, latin_name=?, phylum=?, class=?, \`order\`=?, family=?, genus=?, species=?,
+        chinese_name=?, latin_name=?, phylum=?, class=?, "order"=?, family=?, genus=?, species=?,
         morphology=?, habits=?, distribution=?, longitude=?, latitude=?,
         protection_level=?, endangered_status=?, image_url=?, video_url=?, references_text=?
       WHERE id=?

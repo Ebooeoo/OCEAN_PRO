@@ -3,587 +3,422 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>海洋生物多样性系统 — 部署操作手册</title>
+<title>海洋生物系统 · 免费部署手册（Koyeb + Supabase + Netlify）</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, 'Microsoft YaHei', sans-serif; background: #f0f4f8; color: #1a202c; }
-  
-  .hero {
-    background: linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #90e0ef 100%);
-    color: white; padding: 48px 32px; text-align: center;
-  }
-  .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; }
+  .hero { background: linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #90e0ef 100%); color: white; padding: 48px 32px; text-align: center; }
+  .hero h1 { font-size: 2rem; margin-bottom: 8px; }
   .hero p { font-size: 1.1rem; opacity: 0.9; }
-  .badge { display: inline-block; background: rgba(255,255,255,0.25); border-radius: 20px; padding: 4px 16px; margin: 4px; font-size: 0.85rem; }
-
+  .badge-row { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; }
   .container { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
-
-  .arch-box {
-    background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .arch-box h2 { color: #0077b6; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  
-  .arch-diagram {
-    display: flex; align-items: center; justify-content: center; gap: 16px;
-    flex-wrap: wrap; padding: 16px 0;
-  }
-  .arch-node {
-    text-align: center; padding: 16px 20px; border-radius: 10px; min-width: 140px;
-  }
-  .arch-node.user   { background: #e0f2fe; border: 2px solid #0284c7; }
-  .arch-node.front  { background: #dcfce7; border: 2px solid #16a34a; }
-  .arch-node.back   { background: #fef3c7; border: 2px solid #d97706; }
-  .arch-node.db     { background: #fce7f3; border: 2px solid #db2777; }
-  .arch-node .icon  { font-size: 2rem; display: block; margin-bottom: 4px; }
-  .arch-node .label { font-weight: 600; font-size: 0.9rem; }
-  .arch-node .sub   { font-size: 0.75rem; color: #666; margin-top: 4px; }
-  .arch-arrow { font-size: 1.5rem; color: #94a3b8; }
-
-  .platform-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .platform-card {
-    background: white; border-radius: 12px; padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid;
-  }
-  .platform-card.render { border-color: #46e3b7; }
-  .platform-card.netlify { border-color: #00ad9f; }
-  .platform-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
-  .platform-card .url { font-size: 0.8rem; color: #666; word-break: break-all; }
-  .free-tag { background: #dcfce7; color: #15803d; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
-
-  .phase {
-    background: white; border-radius: 12px; margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;
-  }
-  .phase-header {
-    padding: 18px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer;
-  }
-  .phase-header.render  { background: linear-gradient(to right, #f0fdf4, #dcfce7); }
-  .phase-header.netlify { background: linear-gradient(to right, #f0fdfa, #ccfbf1); }
-  .phase-header.verify  { background: linear-gradient(to right, #fefce8, #fef9c3); }
-  .phase-num {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 1rem; flex-shrink: 0;
-  }
-  .render .phase-num  { background: #16a34a; color: white; }
-  .netlify .phase-num { background: #0d9488; color: white; }
-  .verify .phase-num  { background: #ca8a04; color: white; }
-  .phase-title { font-size: 1.1rem; font-weight: 600; }
-  .phase-sub { font-size: 0.8rem; color: #666; margin-top: 2px; }
-
-  .phase-body { padding: 0 24px 24px; }
-  
-  .step {
-    display: flex; gap: 16px; margin-bottom: 20px; padding-top: 20px;
-    border-top: 1px dashed #e5e7eb;
-  }
-  .step:first-child { border-top: none; }
-  .step-num {
-    width: 28px; height: 28px; border-radius: 50%; background: #e0f2fe;
-    color: #0284c7; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; margin-top: 2px;
-  }
-  .step-content h4 { font-size: 0.95rem; margin-bottom: 8px; color: #1e3a5f; }
-  .step-content p  { font-size: 0.875rem; color: #4b5563; line-height: 1.6; margin-bottom: 8px; }
-
-  .code-block {
-    background: #1e293b; color: #e2e8f0; border-radius: 8px;
-    padding: 12px 16px; font-family: 'Consolas', monospace; font-size: 0.8rem;
-    margin: 8px 0; overflow-x: auto; position: relative;
-  }
-  .code-block .comment { color: #94a3b8; }
-  .code-block .key     { color: #93c5fd; }
-  .code-block .val     { color: #86efac; }
-  .copy-btn {
-    position: absolute; top: 8px; right: 8px;
-    background: #334155; color: #94a3b8; border: none; border-radius: 4px;
-    padding: 2px 8px; font-size: 0.7rem; cursor: pointer;
-  }
-  .copy-btn:hover { background: #475569; color: white; }
-
-  .env-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 8px 0; }
-  .env-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid #e2e8f0; }
-  .env-table td { padding: 8px 12px; border: 1px solid #e2e8f0; vertical-align: top; }
-  .env-table tr:hover td { background: #f8fafc; }
-  .env-key { font-family: monospace; color: #0369a1; font-weight: 600; }
-  .env-desc { color: #666; }
-
-  .tip {
-    border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; margin: 8px 0;
-    display: flex; gap: 8px; align-items: flex-start;
-  }
-  .tip.info  { background: #e0f2fe; border-left: 3px solid #0284c7; }
-  .tip.warn  { background: #fef9c3; border-left: 3px solid #ca8a04; }
-  .tip.success { background: #dcfce7; border-left: 3px solid #16a34a; }
-  .tip.danger  { background: #fee2e2; border-left: 3px solid #dc2626; }
-  .tip-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 20px; border-radius: 8px; font-weight: 600;
-    font-size: 0.9rem; text-decoration: none; cursor: pointer;
-    border: none; transition: all 0.2s;
-  }
-  .btn-render  { background: #46e3b7; color: #064e3b; }
-  .btn-netlify { background: #00ad9f; color: white; }
-  .btn-gitee   { background: #c0392b; color: white; }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
-
-  .checklist { list-style: none; }
-  .checklist li {
-    padding: 6px 0; display: flex; gap: 8px; align-items: center;
-    font-size: 0.875rem; border-bottom: 1px dashed #f1f5f9;
-  }
-  .checklist li:last-child { border: none; }
-  .check-icon { color: #16a34a; font-size: 1rem; }
-
-  .result-card {
-    background: linear-gradient(135deg, #0077b6, #00b4d8);
-    border-radius: 12px; padding: 24px; color: white; text-align: center; margin-top: 24px;
-  }
-  .result-card h3 { font-size: 1.3rem; margin-bottom: 16px; }
-  .result-url {
-    background: rgba(255,255,255,0.2); border-radius: 8px; padding: 12px 16px;
-    font-family: monospace; margin: 8px 0; font-size: 0.9rem;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .faq { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .faq h2 { color: #0077b6; margin-bottom: 16px; }
-  .faq-item { margin-bottom: 16px; }
-  .faq-q { font-weight: 600; color: #dc2626; margin-bottom: 6px; font-size: 0.9rem; }
-  .faq-a { font-size: 0.875rem; color: #4b5563; line-height: 1.6; }
-
+  .overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
+  .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+  .card .icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .card h3 { font-size: 1rem; color: #2d3748; margin-bottom: 4px; }
+  .card p { font-size: 0.82rem; color: #718096; }
+  .card .tag { display: inline-block; background: #e8f5e9; color: #2e7d32; border-radius: 10px; padding: 2px 10px; font-size: 0.75rem; margin-top: 6px; }
+  .section { background: white; border-radius: 14px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; color: white; flex-shrink: 0; }
+  .blue { background: #0077b6; }
+  .green { background: #2e7d32; }
+  .purple { background: #6d28d9; }
+  .section-header h2 { font-size: 1.2rem; color: #1a202c; }
+  .section-header .sub { font-size: 0.8rem; color: #718096; margin-top: 2px; }
+  ol { padding-left: 0; list-style: none; counter-reset: steps; }
+  ol li { counter-increment: steps; display: flex; gap: 14px; margin-bottom: 20px; }
+  ol li::before { content: counter(steps); min-width: 28px; height: 28px; border-radius: 50%; background: #ebf8ff; color: #0077b6; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
+  ol li .content h4 { font-size: 0.95rem; margin-bottom: 4px; color: #2d3748; }
+  ol li .content p { font-size: 0.85rem; color: #4a5568; line-height: 1.6; }
+  .code { background: #1a202c; color: #68d391; border-radius: 8px; padding: 14px 16px; font-family: 'Consolas', monospace; font-size: 0.88rem; margin: 10px 0; overflow-x: auto; }
+  .code .comment { color: #718096; }
+  .env-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
+  .env-table th { background: #ebf8ff; color: #0077b6; padding: 8px 12px; text-align: left; border: 1px solid #bee3f8; }
+  .env-table td { padding: 8px 12px; border: 1px solid #e2e8f0; }
+  .env-table tr:nth-child(even) td { background: #f7fafc; }
+  .env-table .key { font-family: monospace; color: #e53e3e; }
+  .env-table .val { font-family: monospace; color: #2b6cb0; }
+  .tip { background: #fffbeb; border-left: 4px solid #f6ad55; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 0.85rem; color: #744210; }
+  .tip strong { display: block; margin-bottom: 4px; }
+  .success { background: #f0fff4; border-left: 4px solid #68d391; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 0.85rem; color: #276749; }
+  .link { color: #0077b6; text-decoration: none; font-weight: 500; }
+  .link:hover { text-decoration: underline; }
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-item { background: #ebf8ff; color: #0077b6; border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; border: 1px solid #bee3f8; }
+  .flow-arrow { color: #a0aec0; font-size: 1.2rem; }
+  .highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
   @media (max-width: 600px) {
-    .platform-row { grid-template-columns: 1fr; }
-    .arch-diagram { flex-direction: column; }
-    .arch-arrow { transform: rotate(90deg); }
+    .overview { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.5rem; }
   }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <h1>🌊 海洋生物多样性系统 — 部署手册</h1>
-  <p>Render（后端+数据库）+ Netlify（前端）全免费部署方案</p>
-  <div style="margin-top:12px">
-    <span class="badge">✅ 满足 Web服务器要求</span>
-    <span class="badge">✅ 满足 应用服务器要求</span>
-    <span class="badge">✅ 满足 数据库服务器要求</span>
-    <span class="badge">💰 完全免费</span>
+  <h1>🌊 海洋生物多样性信息系统</h1>
+  <p>免费部署完全指南 · Koyeb + Supabase + Netlify</p>
+  <div class="badge-row">
+    <span class="badge">✅ 完全免费</span>
+    <span class="badge">✅ 无需绑卡</span>
+    <span class="badge">✅ GitHub 账号即可</span>
+    <span class="badge">✅ 服务不休眠</span>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- 架构说明 -->
-  <div class="arch-box">
-    <h2>🏗️ 部署架构总览</h2>
-    <div class="arch-diagram">
-      <div class="arch-node user">
-        <span class="icon">👤</span>
-        <div class="label">用户浏览器</div>
-        <div class="sub">访问前端页面</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-node front">
-        <span class="icon">🌐</span>
-        <div class="label">Netlify</div>
-        <div class="sub">前端 Vue3 静态页面<br>Web服务器 ✅</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-node back">
-        <span class="icon">⚙️</span>
-        <div class="label">Render</div>
-        <div class="sub">Node.js + Express<br>应用服务器 ✅</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-node db">
-        <span class="icon">🗄️</span>
-        <div class="label">Render MySQL</div>
-        <div class="sub">MySQL 数据库<br>数据库服务器 ✅</div>
-      </div>
+  <!-- 架构总览 -->
+  <div class="overview">
+    <div class="card">
+      <div class="icon">🗄️</div>
+      <h3>Supabase</h3>
+      <p>PostgreSQL 数据库<br>500MB · 永久免费</p>
+      <span class="tag">无需绑卡</span>
     </div>
-    <div class="tip info" style="margin-top:8px">
-      <span class="tip-icon">ℹ️</span>
-      <span>三个服务器角色全部满足实验要求：<strong>Web服务器（Netlify CDN）</strong>、<strong>应用服务器（Render Node.js）</strong>、<strong>数据库服务器（Render MySQL）</strong></span>
+    <div class="card">
+      <div class="icon">⚙️</div>
+      <h3>Koyeb</h3>
+      <p>Node.js 后端服务<br>24/7 不休眠</p>
+      <span class="tag">无需绑卡</span>
+    </div>
+    <div class="card">
+      <div class="icon">🌐</div>
+      <h3>Netlify</h3>
+      <p>Vue3 前端静态托管<br>CDN 全球加速</p>
+      <span class="tag">无需绑卡</span>
     </div>
   </div>
 
-  <!-- 平台简介 -->
-  <div class="platform-row">
-    <div class="platform-card render">
-      <h3>⚙️ Render <span class="free-tag">免费</span></h3>
-      <p style="font-size:0.85rem;color:#4b5563;margin:8px 0">部署 Node.js 后端 + MySQL 数据库。支持连接 Gitee，每月 750 小时免费使用。</p>
-      <div class="btn-row">
-        <a href="https://render.com" target="_blank" class="btn btn-render">🔗 打开 Render</a>
-      </div>
-      <div class="url">https://render.com</div>
+  <!-- 流程图 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num blue">🗺</div>
+      <div><h2>部署流程总览</h2><div class="sub">预计总耗时 20 分钟</div></div>
     </div>
-    <div class="platform-card netlify">
-      <h3>🌐 Netlify <span class="free-tag">免费</span></h3>
-      <p style="font-size:0.85rem;color:#4b5563;margin:8px 0">部署 Vue3 前端静态页面。每月 100GB 流量免费，全球 CDN 加速。</p>
-      <div class="btn-row">
-        <a href="https://netlify.com" target="_blank" class="btn btn-netlify">🔗 打开 Netlify</a>
-      </div>
-      <div class="url">https://netlify.com</div>
+    <div class="flow">
+      <div class="flow-item">① 注册 Supabase<br>创建数据库</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">② 注册 Koyeb<br>部署后端</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">③ 注册 Netlify<br>部署前端</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">④ 配置前端<br>后端地址</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">✅ 上线完成</div>
     </div>
   </div>
 
-  <!-- ====== 第一步：Render 部署 ====== -->
-  <div class="phase">
-    <div class="phase-header render">
-      <div class="phase-num render">1</div>
-      <div>
-        <div class="phase-title">⚙️ Render — 部署数据库 + 后端</div>
-        <div class="phase-sub">预计时间：10 分钟 | 需要注册 Render 账号</div>
-      </div>
+  <!-- STEP 1: Supabase -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num green">1</div>
+      <div><h2>创建 Supabase 数据库</h2><div class="sub">完全免费 · 约 5 分钟</div></div>
     </div>
-    <div class="phase-body">
-
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <h4>注册 / 登录 Render</h4>
-          <p>打开 <strong>https://render.com</strong>，点击右上角 <strong>「Get Started」</strong>，用 GitHub 或 Google 账号注册即可（推荐 GitHub，后续可直接连仓库）。</p>
-          <div class="btn-row">
-            <a href="https://render.com/register" target="_blank" class="btn btn-render">前往注册 Render →</a>
-          </div>
+    <ol>
+      <li>
+        <div class="content">
+          <h4>打开 Supabase 官网并注册</h4>
+          <p>访问 <a class="link" href="https://supabase.com" target="_blank">https://supabase.com</a>，点击右上角 <strong>Start your project</strong>，用 <strong>GitHub 账号</strong>直接登录，无需填写银行卡。</p>
         </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <h4>创建 MySQL 数据库</h4>
-          <p>登录后进入 Dashboard，点击右上角 <strong>「New +」→「PostgreSQL」旁边选 「MySQL (Beta)」</strong>（或点 New → Database）：</p>
-          <ul style="font-size:0.875rem;color:#4b5563;line-height:2;padding-left:20px">
-            <li><strong>Name</strong>：填 <code>marine-biodiversity-db</code></li>
-            <li><strong>Database</strong>：填 <code>marine_biodiversity</code></li>
-            <li><strong>User</strong>：填 <code>marine_user</code></li>
-            <li><strong>Region</strong>：选 <code>Singapore</code>（离中国最近）</li>
-            <li><strong>Plan</strong>：选 <code>Free</code></li>
-          </ul>
-          <div class="tip warn">
-            <span class="tip-icon">⚠️</span>
-            <span>创建完成后，点击数据库 → <strong>「Info」</strong> 标签，记下以下信息（后面配置后端要用）：<br>
-            Hostname、Port、Database、Username、Password</span>
-          </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>新建项目</h4>
+          <p>点击 <strong>New Project</strong> → 填写项目名称（如 <span class="highlight">marine-bio</span>）→ 设置数据库密码（记住这个密码！）→ 地区选 <strong>Southeast Asia (Singapore)</strong> → 点击 <strong>Create new project</strong>。</p>
+          <div class="tip"><strong>⚠️ 记住密码！</strong>数据库密码等下配置环境变量时要用，创建后无法找回。</div>
         </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <h4>导入数据库初始数据</h4>
-          <p>在 Render 数据库页面，点击 <strong>「Connect」</strong> 标签，找到 <strong>「PSQL Command」</strong> 或 <strong>外部连接信息</strong>。</p>
-          <p>用下面命令把本地的 SQL 导入到 Render（在你的电脑上运行）：</p>
-          <div class="code-block">
-            <span class="comment"># 替换尖括号内的内容为你 Render 数据库的实际值</span><br>
-            <span class="key">mysql</span> -h <span class="val">&lt;Hostname&gt;</span> -P <span class="val">&lt;Port&gt;</span> -u <span class="val">&lt;Username&gt;</span> -p<span class="val">&lt;Password&gt;</span> <span class="val">marine_biodiversity</span> &lt; <span class="val">marine-biodiversity-full-export.sql</span>
+      </li>
+      <li>
+        <div class="content">
+          <h4>获取数据库连接字符串</h4>
+          <p>项目创建后（约1分钟），点击左侧 <strong>Settings</strong> → <strong>Database</strong> → 找到 <strong>Connection string</strong> 区域 → 选择 <strong>URI</strong> 选项卡 → 复制连接字符串。</p>
+          <div class="code">
+            <span class="comment"># 连接字符串格式如下（YOUR-PASSWORD 替换为你设的密码）：</span><br>
+            postgresql://postgres:[YOUR-PASSWORD]@db.xxxx.supabase.co:5432/postgres
           </div>
-          <div class="tip info">
-            <span class="tip-icon">💡</span>
-            <span>如果你的电脑没有 mysql 命令行，可以用 <strong>TablePlus</strong>（免费）或 <strong>DBeaver</strong>（免费）连接数据库后，菜单栏选「File → Import → SQL Script」导入文件。</span>
-          </div>
-          <div class="tip info">
-            <span class="tip-icon">💡</span>
-            <span>SQL 文件路径：<strong>C:\Users\HP\WorkBuddy\20260325134634\marine-biodiversity-full-export.sql</strong></span>
-          </div>
+          <div class="tip"><strong>💡 连接字符串在哪里？</strong>Settings → Database → Connection string → URI 选项卡</div>
         </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <h4>部署后端 Web Service</h4>
-          <p>在 Render Dashboard，点击 <strong>「New +」→「Web Service」</strong>：</p>
-          <ol style="font-size:0.875rem;color:#4b5563;line-height:2;padding-left:20px">
-            <li>选择 <strong>「Public Git repository」</strong>，输入 Gitee 地址：<br>
-            <code>https://gitee.com/gdou_-ocean_-project/ocean_-project.git</code></li>
-            <li><strong>Name</strong>：<code>marine-backend</code></li>
-            <li><strong>Root Directory</strong>：<code>marine-backend</code></li>
-            <li><strong>Runtime</strong>：<code>Node</code></li>
-            <li><strong>Build Command</strong>：<code>npm install</code></li>
-            <li><strong>Start Command</strong>：<code>node src/app.js</code></li>
-            <li><strong>Plan</strong>：<code>Free</code></li>
-          </ol>
+      </li>
+      <li>
+        <div class="content">
+          <h4>初始化数据库表和数据</h4>
+          <p>点击左侧 <strong>SQL Editor</strong> → 点击 <strong>New query</strong> → 把下面的 SQL 全部粘贴进去 → 点击 <strong>Run</strong>（▶️ 按钮）。</p>
+          <div class="code">
+-- 用户表<br>
+CREATE TABLE IF NOT EXISTS users (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;username VARCHAR(50) NOT NULL UNIQUE,<br>
+&nbsp;&nbsp;password VARCHAR(255) NOT NULL,<br>
+&nbsp;&nbsp;role VARCHAR(20) NOT NULL DEFAULT 'public',<br>
+&nbsp;&nbsp;name VARCHAR(100),<br>
+&nbsp;&nbsp;email VARCHAR(100),<br>
+&nbsp;&nbsp;avatar TEXT,<br>
+&nbsp;&nbsp;status SMALLINT DEFAULT 1,<br>
+&nbsp;&nbsp;created_at DATE DEFAULT CURRENT_DATE<br>
+);<br><br>
+-- 生态系统表<br>
+CREATE TABLE IF NOT EXISTS ecosystems (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;name VARCHAR(100) NOT NULL,<br>
+&nbsp;&nbsp;type VARCHAR(50),<br>
+&nbsp;&nbsp;description TEXT,<br>
+&nbsp;&nbsp;area VARCHAR(200),<br>
+&nbsp;&nbsp;created_at DATE DEFAULT CURRENT_DATE<br>
+);<br><br>
+-- 物种表<br>
+CREATE TABLE IF NOT EXISTS species (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;chinese_name VARCHAR(100) NOT NULL,<br>
+&nbsp;&nbsp;latin_name VARCHAR(200),<br>
+&nbsp;&nbsp;phylum VARCHAR(100), class VARCHAR(100),<br>
+&nbsp;&nbsp;"order" VARCHAR(100), family VARCHAR(100),<br>
+&nbsp;&nbsp;genus VARCHAR(100), species VARCHAR(100),<br>
+&nbsp;&nbsp;morphology TEXT, habits TEXT, distribution TEXT,<br>
+&nbsp;&nbsp;longitude DECIMAL(10,6), latitude DECIMAL(10,6),<br>
+&nbsp;&nbsp;protection_level VARCHAR(50) DEFAULT '无',<br>
+&nbsp;&nbsp;endangered_status VARCHAR(10) DEFAULT 'LC',<br>
+&nbsp;&nbsp;image_url TEXT, video_url TEXT, references_text TEXT,<br>
+&nbsp;&nbsp;created_by VARCHAR(100),<br>
+&nbsp;&nbsp;created_at DATE DEFAULT CURRENT_DATE,<br>
+&nbsp;&nbsp;status SMALLINT DEFAULT 1<br>
+);<br><br>
+-- 观测记录表<br>
+CREATE TABLE IF NOT EXISTS observations (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;title VARCHAR(200) NOT NULL,<br>
+&nbsp;&nbsp;observed_at TIMESTAMP,<br>
+&nbsp;&nbsp;longitude DECIMAL(10,6), latitude DECIMAL(10,6),<br>
+&nbsp;&nbsp;ecosystem_id INT REFERENCES ecosystems(id) ON DELETE SET NULL,<br>
+&nbsp;&nbsp;ecosystem_name VARCHAR(100), observers VARCHAR(200),<br>
+&nbsp;&nbsp;water_temp DECIMAL(5,2), salinity DECIMAL(5,2), depth DECIMAL(8,2),<br>
+&nbsp;&nbsp;weather_condition VARCHAR(50), notes TEXT,<br>
+&nbsp;&nbsp;created_by VARCHAR(100),<br>
+&nbsp;&nbsp;created_at DATE DEFAULT CURRENT_DATE<br>
+);<br><br>
+-- 关联表<br>
+CREATE TABLE IF NOT EXISTS observation_species (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;observation_id INT NOT NULL REFERENCES observations(id) ON DELETE CASCADE,<br>
+&nbsp;&nbsp;species_id INT NOT NULL REFERENCES species(id) ON DELETE CASCADE,<br>
+&nbsp;&nbsp;species_name VARCHAR(100), count INT DEFAULT 0, behavior VARCHAR(200)<br>
+);<br><br>
+-- 注册申请表<br>
+CREATE TABLE IF NOT EXISTS user_applications (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;name VARCHAR(100), username VARCHAR(50) NOT NULL UNIQUE,<br>
+&nbsp;&nbsp;email VARCHAR(100), password VARCHAR(255) NOT NULL,<br>
+&nbsp;&nbsp;role VARCHAR(20) DEFAULT 'student',<br>
+&nbsp;&nbsp;status VARCHAR(20) DEFAULT 'pending',<br>
+&nbsp;&nbsp;apply_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,<br>
+&nbsp;&nbsp;apply_ip VARCHAR(50), review_remark VARCHAR(200)<br>
+);<br><br>
+-- 活动日志表<br>
+CREATE TABLE IF NOT EXISTS activity_logs (<br>
+&nbsp;&nbsp;id SERIAL PRIMARY KEY,<br>
+&nbsp;&nbsp;user_id INT, user_name VARCHAR(100),<br>
+&nbsp;&nbsp;action VARCHAR(100), target VARCHAR(200),<br>
+&nbsp;&nbsp;time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ip VARCHAR(50)<br>
+);<br><br>
+-- 插入初始用户<br>
+INSERT INTO users (username,password,role,name,email,status,created_at) VALUES<br>
+('admin','admin123','admin','系统管理员','admin@gdou.edu.cn',1,'2024-01-01'),<br>
+('researcher','research123','researcher','张教授','zhang@gdou.edu.cn',1,'2024-01-05'),<br>
+('student','student123','student','赵学生','zhao@gdou.edu.cn',1,'2024-02-01'),<br>
+('public','public123','public','访客用户','guest@example.com',1,'2024-03-01');<br><br>
+-- 插入生态系统<br>
+INSERT INTO ecosystems (name,type,description,area) VALUES<br>
+('珊瑚礁生态系统','coral_reef','热带和亚热带浅海珊瑚礁区域，生物多样性极为丰富。','南海'),<br>
+('红树林生态系统','mangrove','热带和亚热带海岸潮间带红树林区域。','广东湛江、雷州半岛'),<br>
+('海草床生态系统','seagrass','浅海区域海草草场，是儒艮、海龟的重要觅食地。','广东沿海浅海区'),<br>
+('深海生态系统','deep_sea','水深超200米的深海区域。','南海深水区'),<br>
+('河口生态系统','estuary','淡水与海水交汇的河口区域。','珠江口、韩江口');
+          </div>
+          <div class="success">✅ 运行成功后，左侧 Table Editor 里能看到 7 张表就说明数据库创建好了！</div>
         </div>
-      </div>
+      </li>
+    </ol>
+  </div>
 
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <h4>配置后端环境变量</h4>
-          <p>在 Web Service 配置页，找到 <strong>「Environment Variables」</strong> 部分，添加以下变量：</p>
+  <!-- STEP 2: Koyeb -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num blue">2</div>
+      <div><h2>部署后端到 Koyeb</h2><div class="sub">Node.js · 24/7 不休眠 · 约 8 分钟</div></div>
+    </div>
+    <ol>
+      <li>
+        <div class="content">
+          <h4>注册 Koyeb 账号</h4>
+          <p>访问 <a class="link" href="https://app.koyeb.com/auth/signup" target="_blank">https://app.koyeb.com/auth/signup</a>，点击 <strong>Continue with GitHub</strong>，用 GitHub 账号直接注册，<strong>不需要填写任何支付信息</strong>。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>创建新服务</h4>
+          <p>登录后点击右上角 <strong>Create Service</strong> → 选择 <strong>Web Service</strong>。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>连接 GitHub 仓库</h4>
+          <p>选择 <strong>GitHub</strong> → 点击 <strong>Install GitHub App</strong> 授权仓库访问 → 选择 <span class="highlight">Ebooeoo/OCEAN_PRO</span> 仓库 → 分支选 <strong>master</strong>。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>配置构建设置</h4>
+          <p>在构建配置页面填写：</p>
           <table class="env-table">
-            <tr><th>变量名</th><th>填入的值</th><th>说明</th></tr>
-            <tr><td class="env-key">DB_HOST</td><td>Render 数据库 Hostname</td><td class="env-desc">数据库连接地址</td></tr>
-            <tr><td class="env-key">DB_PORT</td><td>Render 数据库 Port（通常 3306）</td><td class="env-desc">数据库端口</td></tr>
-            <tr><td class="env-key">DB_USER</td><td>Render 数据库 Username</td><td class="env-desc">数据库用户名</td></tr>
-            <tr><td class="env-key">DB_PASSWORD</td><td>Render 数据库 Password</td><td class="env-desc">数据库密码</td></tr>
-            <tr><td class="env-key">DB_NAME</td><td><code>marine_biodiversity</code></td><td class="env-desc">数据库名</td></tr>
-            <tr><td class="env-key">JWT_SECRET</td><td><code>marine_gdou_prod_2026_xK9mN</code></td><td class="env-desc">JWT 签名密钥（可自定义）</td></tr>
-            <tr><td class="env-key">NODE_ENV</td><td><code>production</code></td><td class="env-desc">生产模式</td></tr>
-          </table>
-          <p>点击 <strong>「Create Web Service」</strong>，等待 3-5 分钟部署完成。</p>
-          <div class="tip success">
-            <span class="tip-icon">✅</span>
-            <span>部署成功后你会看到绿色 <strong>「Live」</strong> 标志，并获得后端地址，格式如：<br>
-            <strong>https://marine-backend-xxxx.onrender.com</strong><br>
-            <strong>⭐ 请把这个地址记下来，第二步需要用到！</strong></span>
-          </div>
-          <div class="tip warn">
-            <span class="tip-icon">⚠️</span>
-            <span>验证后端是否正常：访问 <strong>https://你的后端地址/api/health</strong>，应返回 <code>{"status":"ok"}</code></span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ====== 第二步：Netlify 部署 ====== -->
-  <div class="phase">
-    <div class="phase-header netlify">
-      <div class="phase-num netlify">2</div>
-      <div>
-        <div class="phase-title">🌐 Netlify — 部署前端</div>
-        <div class="phase-sub">预计时间：5 分钟 | 需要注册 Netlify 账号</div>
-      </div>
-    </div>
-    <div class="phase-body">
-
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <h4>注册 / 登录 Netlify</h4>
-          <p>打开 <strong>https://netlify.com</strong>，用 GitHub 或 Email 注册账号。</p>
-          <div class="btn-row">
-            <a href="https://app.netlify.com/signup" target="_blank" class="btn btn-netlify">前往注册 Netlify →</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <h4>拖拽部署（最简单方式）</h4>
-          <p>这是最快的方法，不需要连接 Git 仓库：</p>
-          <ol style="font-size:0.875rem;color:#4b5563;line-height:2;padding-left:20px">
-            <li>打开 Netlify Sites 页面（登录后默认首页）</li>
-            <li>找到页面底部的 <strong>「Drag and drop your site output folder here」</strong> 区域</li>
-            <li>打开你电脑上的文件夹：<code>C:\Users\HP\WorkBuddy\20260325134634\marine-biodiversity\dist</code></li>
-            <li>把 <strong>dist 文件夹整个</strong>拖拽到 Netlify 的那个区域</li>
-            <li>等待上传完成（约 30 秒）</li>
-          </ol>
-          <div class="tip info">
-            <span class="tip-icon">💡</span>
-            <span>dist 文件夹已经构建好，大小约 3MB，直接拖上去即可，无需任何构建操作</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <h4>设置环境变量（指向后端地址）</h4>
-          <p>上传完成后，进入站点 → <strong>「Site configuration」→「Environment variables」</strong>，点 <strong>「Add a variable」</strong>：</p>
-          <table class="env-table">
-            <tr><th>Key（变量名）</th><th>Value（填入的值）</th></tr>
-            <tr>
-              <td class="env-key">VITE_API_BASE_URL</td>
-              <td>第一步获取的 Render 后端地址 + <code>/api</code><br>
-              例如：<code>https://marine-backend-xxxx.onrender.com/api</code></td>
-            </tr>
-          </table>
-          <div class="tip warn">
-            <span class="tip-icon">⚠️</span>
-            <span>由于是拖拽方式部署，设置完环境变量后需要<strong>重新构建并拖拽</strong>一次。<br>
-            或者，改用 Git 连接方式（见下方说明），这样环境变量会自动注入到构建过程中。</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <h4>（推荐）通过 Git 连接自动部署</h4>
-          <p>如果你想要环境变量自动生效，按以下步骤改为 Git 连接方式：</p>
-          <ol style="font-size:0.875rem;color:#4b5563;line-height:2;padding-left:20px">
-            <li>在 Netlify 站点 → <strong>「Site configuration」→「Build & deploy」→「Continuous deployment」</strong></li>
-            <li>点击 <strong>「Link repository」</strong></li>
-            <li>选择 <strong>「Deploy with GitHub」</strong>（需要先把 Gitee 仓库同步到 GitHub，或者使用 GitHub 镜像）</li>
-            <li>
-              配置构建参数：<br>
-              <div class="code-block">
-                <span class="key">Base directory:</span>     <span class="val">marine-biodiversity</span><br>
-                <span class="key">Build command:</span>     <span class="val">npm run build</span><br>
-                <span class="key">Publish directory:</span> <span class="val">marine-biodiversity/dist</span>
-              </div>
-            </li>
-            <li>在 <strong>「Environment variables」</strong> 添加 <code>VITE_API_BASE_URL</code></li>
-            <li>点击 <strong>「Deploy site」</strong></li>
-          </ol>
-          <div class="tip info">
-            <span class="tip-icon">💡</span>
-            <span>项目根目录已有 <code>netlify.toml</code> 配置文件，Netlify 会自动读取其中的构建配置和路由重定向规则，无需手动设置。</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <h4>本地重新构建并上传（拖拽方式环境变量生效）</h4>
-          <p>如果使用拖拽方式，需要先在本地设置好环境变量再构建：</p>
-          <p>新建文件 <code>marine-biodiversity/.env.production</code>，写入：</p>
-          <div class="code-block">
-            <span class="key">VITE_API_BASE_URL</span>=<span class="val">https://marine-backend-xxxx.onrender.com/api</span>
-          </div>
-          <p>然后在命令行运行：</p>
-          <div class="code-block">
-            <span class="comment"># 进入前端目录</span><br>
-            <span class="key">cd</span> C:\Users\HP\WorkBuddy\20260325134634\marine-biodiversity<br>
-            <span class="comment"># 构建生产版本</span><br>
-            <span class="key">npm run build</span>
-          </div>
-          <p>重新把 dist 文件夹拖到 Netlify。</p>
-          <div class="tip success">
-            <span class="tip-icon">✅</span>
-            <span>部署成功后 Netlify 会给你一个地址，格式如：<br>
-            <strong>https://marine-biodiversity-xxxx.netlify.app</strong></span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ====== 第三步：验证 ====== -->
-  <div class="phase">
-    <div class="phase-header verify">
-      <div class="phase-num verify">3</div>
-      <div>
-        <div class="phase-title">✅ 验证部署是否成功</div>
-        <div class="phase-sub">预计时间：3 分钟</div>
-      </div>
-    </div>
-    <div class="phase-body">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <h4>逐项检查清单</h4>
-          <ul class="checklist">
-            <li><span class="check-icon">□</span> 访问前端地址，页面能正常加载（不是白屏）</li>
-            <li><span class="check-icon">□</span> 访问 <code>/api/health</code> 返回 <code>{"status":"ok"}</code></li>
-            <li><span class="check-icon">□</span> 用 admin / admin123 能成功登录</li>
-            <li><span class="check-icon">□</span> 物种列表能正常显示数据（8条物种）</li>
-            <li><span class="check-icon">□</span> 观测记录列表能正常显示（5条记录）</li>
-            <li><span class="check-icon">□</span> 分析页面图表能正常渲染</li>
-            <li><span class="check-icon">□</span> 刷新页面不出现 404（Vue Router history 模式）</li>
-          </ul>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <h4>默认测试账号</h4>
-          <table class="env-table">
-            <tr><th>账号</th><th>密码</th><th>角色</th><th>权限</th></tr>
-            <tr><td><strong>admin</strong></td><td>admin123</td><td>管理员</td><td>全部增删改查 + 用户管理</td></tr>
-            <tr><td><strong>researcher</strong></td><td>research123</td><td>研究员</td><td>增删改查物种和观测记录</td></tr>
-            <tr><td><strong>student</strong></td><td>student123</td><td>学生</td><td>只读 + 添加观测记录</td></tr>
-            <tr><td><strong>public</strong></td><td>public123</td><td>访客</td><td>只读</td></tr>
+            <tr><th>设置项</th><th>填写值</th></tr>
+            <tr><td>Root directory</td><td class="val">marine-backend</td></tr>
+            <tr><td>Builder</td><td class="val">Dockerfile（自动检测）</td></tr>
+            <tr><td>Run command</td><td class="val">node src/app.js</td></tr>
+            <tr><td>Port</td><td class="val">3001</td></tr>
           </table>
         </div>
-      </div>
-    </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>配置环境变量（最关键步骤⚠️）</h4>
+          <p>在 <strong>Environment variables</strong> 区域，逐一添加以下变量：</p>
+          <table class="env-table">
+            <tr><th>变量名</th><th>填写值</th></tr>
+            <tr><td class="key">DATABASE_URL</td><td class="val">postgresql://postgres:[密码]@db.xxx.supabase.co:5432/postgres<br><small>（从 Supabase 第4步复制的连接字符串）</small></td></tr>
+            <tr><td class="key">JWT_SECRET</td><td class="val">marine_gdou_secret_2024_xxxxxxxx（随机字符串，自己定）</td></tr>
+            <tr><td class="key">NODE_ENV</td><td class="val">production</td></tr>
+            <tr><td class="key">PORT</td><td class="val">3001</td></tr>
+          </table>
+          <div class="tip"><strong>⚠️ DATABASE_URL 中的密码</strong>：把 <span class="highlight">[YOUR-PASSWORD]</span> 替换为你在 Supabase 创建项目时设的数据库密码，不要保留方括号。</div>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>选择免费套餐并部署</h4>
+          <p>在页面底部 <strong>Instance</strong> 区域选择 <strong>Free</strong>（免费实例）→ 点击 <strong>Deploy</strong>。等待约 3-5 分钟构建完成。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>记录后端地址</h4>
+          <p>部署成功后，Koyeb 会给你一个域名，格式类似：</p>
+          <div class="code">https://marine-backend-xxxx.koyeb.app</div>
+          <p>访问 <span class="highlight">https://你的域名/api/health</span> 看到 <code>{"status":"ok"}</code> 就说明后端部署成功了！</p>
+          <div class="success">✅ 后端部署成功！记下这个地址，下一步配置前端要用到。</div>
+        </div>
+      </li>
+    </ol>
   </div>
 
-  <!-- 结果卡片 -->
-  <div class="result-card">
-    <h3>🎉 部署完成后，你的系统访问地址</h3>
-    <div class="result-url">
-      <span>🌐 前端（Netlify）</span>
-      <span>https://_____________.netlify.app</span>
+  <!-- STEP 3: Netlify -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num purple">3</div>
+      <div><h2>部署前端到 Netlify</h2><div class="sub">Vue3 静态网站 · 约 5 分钟</div></div>
     </div>
-    <div class="result-url">
-      <span>⚙️ 后端 API（Render）</span>
-      <span>https://_____________.onrender.com/api</span>
-    </div>
-    <div class="result-url">
-      <span>💚 健康检查</span>
-      <span>https://_____________.onrender.com/api/health</span>
-    </div>
-    <p style="margin-top:16px;font-size:0.85rem;opacity:0.85">部署完成后把地址填入上方空白处，留存备用</p>
+    <ol>
+      <li>
+        <div class="content">
+          <h4>修改前端 API 地址</h4>
+          <p>在本地，编辑 <span class="highlight">marine-biodiversity/src/api/http.js</span>，找到 baseURL 那行，把地址改为你的 Koyeb 后端地址：</p>
+          <div class="code">
+            <span class="comment">// 将这行：</span><br>
+            baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'<br><br>
+            <span class="comment">// 改为（或者在 marine-biodiversity/.env.production 文件中设置）：</span><br>
+            VITE_API_BASE_URL=https://你的koyeb域名.koyeb.app/api
+          </div>
+          <div class="tip"><strong>💡 推荐做法</strong>：在 marine-biodiversity/ 目录下新建 <span class="highlight">.env.production</span> 文件，写入上面的环境变量，然后重新构建。</div>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>重新构建前端</h4>
+          <p>在终端执行：</p>
+          <div class="code">cd marine-biodiversity<br>npm run build</div>
+          <p>构建完成后 <span class="highlight">dist/</span> 文件夹就是要上传的内容。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>注册 Netlify 并上传</h4>
+          <p>访问 <a class="link" href="https://netlify.com" target="_blank">https://netlify.com</a> → 用 GitHub 登录 → 在主页找到 <strong>"Want to deploy a new site without connecting to Git?"</strong> 区域 → <strong>把 dist 文件夹整体拖拽到这里</strong>。</p>
+          <div class="tip"><strong>⚠️ 拖拽整个 dist 文件夹</strong>，不是里面的文件，也不是 zip 压缩包。路径：<span class="highlight">marine-biodiversity/dist/</span></div>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>配置 SPA 路由重定向</h4>
+          <p>上传后，在 Netlify 项目的 <strong>Site configuration → Build & deploy → Post processing</strong> 中，添加重定向规则，或者确认 <span class="highlight">dist/_redirects</span> 文件存在（内容如下）：</p>
+          <div class="code">/* /index.html 200</div>
+          <div class="tip"><strong>📝</strong> 若刷新页面出现 404，就是路由重定向没配置，按上面步骤检查。</div>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>获取前端访问地址</h4>
+          <p>Netlify 会自动分配一个域名，如 <span class="highlight">https://amazing-ocean-xxxx.netlify.app</span>，就是你的正式访问地址。</p>
+          <div class="success">✅ 部署完成！用管理员账号登录：username: <strong>admin</strong> · password: <strong>admin123</strong></div>
+        </div>
+      </li>
+    </ol>
   </div>
 
-  <!-- FAQ -->
-  <div class="faq" style="margin-top:24px">
-    <h2>❓ 常见问题</h2>
-
-    <div class="faq-item">
-      <div class="faq-q">❌ 前端白屏 / 刷新后 404</div>
-      <div class="faq-a">已在 <code>netlify.toml</code> 配置了重定向规则（<code>/* → /index.html 200</code>）。如果仍然 404，检查 netlify.toml 是否在 dist 目录里。也可以在 Netlify → Site configuration → Redirects 手动添加 <code>/* /index.html 200</code>。</div>
+  <!-- 初始账户 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num green">✓</div>
+      <div><h2>系统初始账户</h2><div class="sub">部署后可在用户管理中修改密码</div></div>
     </div>
-
-    <div class="faq-item">
-      <div class="faq-q">❌ 接口报错 CORS 跨域</div>
-      <div class="faq-a">后端 <code>app.js</code> 已设置 <code>cors({ origin: '*' })</code>，正常情况不会报 CORS 错误。如果仍然报错，检查 VITE_API_BASE_URL 是否填写正确，末尾不要加 <code>/</code>。</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">❌ 后端数据库连接失败</div>
-      <div class="faq-a">检查 Render 环境变量中的 DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME 是否与 Render MySQL 数据库面板显示的一致。DB_NAME 填 <code>marine_biodiversity</code>。</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">❌ Render 免费版后端 "冷启动" 很慢</div>
-      <div class="faq-a">Render 免费版 15 分钟无请求后会休眠，下次访问需要 30-60 秒冷启动。这对作业演示是正常现象。可以提前打开 <code>/api/health</code> 接口"唤醒"后端。</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">❓ Render MySQL 免费版有什么限制</div>
-      <div class="faq-a">Render MySQL 免费版有 <strong>90 天</strong>有效期，到期后数据库会被删除（但可以重新导入）。存储限制 1GB，对于本项目完全够用。</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">❓ 如何把 Gitee 仓库同步到 GitHub（用于 Netlify Git 连接）</div>
-      <div class="faq-a">
-        1. 在 GitHub.com 新建一个空仓库（不要初始化）<br>
-        2. 在本地运行：<br>
-        <code>git remote add github https://github.com/你的用户名/仓库名.git</code><br>
-        <code>git push github master --force</code><br>
-        3. 然后在 Netlify 连接 GitHub 仓库即可
-      </div>
-    </div>
+    <table class="env-table">
+      <tr><th>用户名</th><th>密码</th><th>角色</th><th>权限</th></tr>
+      <tr><td class="key">admin</td><td>admin123</td><td>管理员</td><td>全部权限（含用户管理、审核）</td></tr>
+      <tr><td class="key">researcher</td><td>research123</td><td>研究员</td><td>增删改物种、观测记录</td></tr>
+      <tr><td class="key">student</td><td>student123</td><td>学生</td><td>只读浏览</td></tr>
+      <tr><td class="key">public</td><td>public123</td><td>访客</td><td>只读浏览</td></tr>
+    </table>
+    <div class="tip"><strong>🔒 安全提示</strong>：上线后请立即用管理员账号修改所有默认密码！</div>
   </div>
 
-  <div style="text-align:center;padding:32px;color:#9ca3af;font-size:0.8rem">
-    海洋生物多样性信息管理系统 | 广东海洋大学软件综合实践 | 2026
+  <!-- 常见问题 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num blue">❓</div>
+      <div><h2>常见问题排查</h2></div>
+    </div>
+    <ol>
+      <li>
+        <div class="content">
+          <h4>后端日志报 "数据库连接失败"</h4>
+          <p>检查 Koyeb 环境变量中 <span class="highlight">DATABASE_URL</span> 是否正确，密码里有特殊字符需要 URL 编码（如 <span class="highlight">@</span> 改为 <span class="highlight">%40</span>）。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>前端请求 API 报 CORS 错误</h4>
+          <p>后端 app.js 已配置 <span class="highlight">cors({ origin: '*' })</span>，若仍报错请检查前端的 <span class="highlight">VITE_API_BASE_URL</span> 是否以 <span class="highlight">https://</span> 开头且没有多余的斜杠。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>Netlify 刷新页面 404</h4>
+          <p>确保 dist 目录下有 <span class="highlight">_redirects</span> 文件，内容为 <span class="highlight">/* /index.html 200</span>。</p>
+        </div>
+      </li>
+      <li>
+        <div class="content">
+          <h4>Koyeb 构建失败</h4>
+          <p>检查 Root directory 是否设置为 <span class="highlight">marine-backend</span>。Koyeb 会自动检测 Dockerfile，确保仓库里 marine-backend/Dockerfile 文件存在。</p>
+        </div>
+      </li>
+    </ol>
   </div>
 
+  <p style="text-align:center; color:#718096; font-size:0.8rem; padding: 20px 0;">
+    海洋生物多样性信息管理系统 · 广东海洋大学软件综合实践 · 2024<br>
+    技术栈：Vue3 + Vite + Element Plus + Node.js + Express + PostgreSQL (Supabase)
+  </p>
 </div>
-
-<script>
-// 代码块一键复制
-document.querySelectorAll('.code-block').forEach(block => {
-  const btn = document.createElement('button');
-  btn.className = 'copy-btn';
-  btn.textContent = '复制';
-  btn.onclick = () => {
-    const text = block.innerText.replace(/复制$/, '').trim();
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = '✓ 已复制';
-      setTimeout(() => btn.textContent = '复制', 2000);
-    });
-  };
-  block.style.position = 'relative';
-  block.appendChild(btn);
-});
-</script>
 </body>
 </html>

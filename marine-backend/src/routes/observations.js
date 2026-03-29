@@ -117,14 +117,14 @@ router.post('/', requireAuth, requireRole('admin', 'researcher'), async (req, re
       INSERT INTO observations
         (title, observed_at, longitude, latitude, ecosystem_id, ecosystem_name,
          observers, water_temp, salinity, depth, weather_condition, notes, created_by, created_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,CURDATE())
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_DATE) RETURNING id
     `, [
       d.title, d.observedAt || null, d.longitude || null, d.latitude || null,
       d.ecosystemId || null, d.ecosystemName || '',
       d.observers || '', d.waterTemp || null, d.salinity || null, d.depth || null,
       d.weatherCondition || '', d.notes || '', createdBy
     ])
-    const obsId = result.insertId
+    const obsId = result.insertId || (Array.isArray(result) && result[0]?.id)
     if (d.species && d.species.length > 0) {
       for (const sp of d.species) {
         await conn.query(

@@ -110,7 +110,7 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10)
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || ''
     const [result] = await pool.query(
-      'INSERT INTO user_applications (name, username, email, password, role, status, apply_ip) VALUES (?, ?, ?, ?, ?, "pending", ?)',
+      "INSERT INTO user_applications (name, username, email, password, role, status, apply_ip) VALUES (?, ?, ?, ?, ?, 'pending', ?) RETURNING id",
       [name || '', username, email || '', hash, applyRole, formatIp(ip)]
     )
     writeLog(0, username, '提交注册申请', `角色：${applyRole}`, ip)
@@ -148,18 +148,18 @@ router.get('/applications', requireAuth, requireRole('admin'), async (req, res) 
 router.post('/applications/:id/approve', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { remark } = req.body
-    const [apps] = await pool.query('SELECT * FROM user_applications WHERE id = ? AND status = "pending"', [req.params.id])
+    const [apps] = await pool.query("SELECT * FROM user_applications WHERE id = ? AND status = 'pending'", [req.params.id])
     if (!apps.length) return res.status(404).json({ success: false, message: '申请不存在或已处理' })
     const app = apps[0]
 
     // 创建正式用户
     const [result] = await pool.query(
-      'INSERT INTO users (name, username, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, 1, CURDATE())',
+      'INSERT INTO users (name, username, email, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, 1, CURRENT_DATE) RETURNING id',
       [app.name, app.username, app.email, app.password, app.role]
     )
     // 更新申请状态
     await pool.query(
-      'UPDATE user_applications SET status = "approved", review_remark = ? WHERE id = ?',
+      "UPDATE user_applications SET status = 'approved', review_remark = ? WHERE id = ?",
       [remark || '审核通过', req.params.id]
     )
     const operator = getOperator(req)
@@ -177,11 +177,11 @@ router.post('/applications/:id/approve', requireAuth, requireRole('admin'), asyn
 router.post('/applications/:id/reject', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { remark } = req.body
-    const [apps] = await pool.query('SELECT * FROM user_applications WHERE id = ? AND status = "pending"', [req.params.id])
+    const [apps] = await pool.query("SELECT * FROM user_applications WHERE id = ? AND status = 'pending'", [req.params.id])
     if (!apps.length) return res.status(404).json({ success: false, message: '申请不存在或已处理' })
     const app = apps[0]
     await pool.query(
-      'UPDATE user_applications SET status = "rejected", review_remark = ? WHERE id = ?',
+      "UPDATE user_applications SET status = 'rejected', review_remark = ? WHERE id = ?",
       [remark || '审核未通过', req.params.id]
     )
     const operator = getOperator(req)
