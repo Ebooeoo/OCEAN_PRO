@@ -2,10 +2,15 @@
   <div class="obs-form">
     <div class="page-header">
       <el-button :icon="Back" @click="$router.back()">返回</el-button>
-      <h2>新增观测记录</h2>
+      <h2>{{ isEdit ? '编辑观测记录' : '新增观测记录' }}</h2>
     </div>
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+    <div v-if="loading" style="text-align: center; padding: 40px">
+      <el-icon class="is-loading" :size="32"><Loading /></el-icon>
+      <p style="color: #999; margin-top: 12px">加载数据中...</p>
+    </div>
+
+    <el-form v-else ref="formRef" :model="form" :rules="rules" label-width="120px">
       <!-- 基本信息 -->
       <el-card style="margin-bottom: 16px">
         <template #header><span class="sec-title">📋 观测基本信息</span></template>
@@ -103,25 +108,33 @@
 
       <div class="form-actions">
         <el-button @click="$router.back()">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">保存观测记录</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+          {{ isEdit ? '保存修改' : '保存观测记录' }}
+        </el-button>
       </div>
     </el-form>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Back, Delete } from '@element-plus/icons-vue'
+import { Back, Delete, Loading } from '@element-plus/icons-vue'
 import { useDataStore } from '../../store/data.js'
 import { useAuthStore } from '../../store/auth.js'
+import { observationsAPI } from '../../api/http.js'
 
+const route = useRoute()
 const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const formRef = ref()
 const submitting = ref(false)
+const loading = ref(false)
+
+// 编辑模式：路由为 /observations/:id/edit
+const isEdit = computed(() => route.name === 'ObservationEdit' && !!route.params.id)
 
 const form = reactive({
   title: '', observedAt: '', longitude: null, latitude: null,
@@ -137,6 +150,57 @@ const rules = {
   longitude: [{ required: true, message: '请输入经度', trigger: 'blur' }],
   latitude: [{ required: true, message: '请输入纬度', trigger: 'blur' }]
 }
+
+onMounted(async () => {
+  // 确保数据已加载
+  if (!dataStore.species.length || !dataStore.ecosystems.length) {
+    await dataStore.loadAll()
+  }
+
+  // 新增模式：如果 URL 带有 ecosystemId 参数，自动预填生态系统
+  if (!isEdit.value && route.query.ecosystemId) {
+    const preEcoId = parseInt(route.query.ecosystemId)
+    form.ecosystemId = preEcoId
+    const eco = dataStore.ecosystems.find(e => e.id === preEcoId)
+    if (eco) form.ecosystemName = eco.name
+  }
+
+  // 编辑模式：加载现有数据
+  if (isEdit.value) {
+    loading.value = true
+    try {
+      const id = parseInt(route.params.id)
+      // 先从 store 找，找不到才请求
+      let existing = dataStore.observations.find(o => o.id === id)
+      if (!existing) {
+        const res = await observationsAPI.getById(id)
+        existing = res.data
+      }
+      if (existing) {
+        Object.assign(form, {
+          title: existing.title || '',
+          observedAt: existing.observedAt || '',
+          longitude: existing.longitude,
+          latitude: existing.latitude,
+          ecosystemId: existing.ecosystemId,
+          ecosystemName: existing.ecosystemName || '',
+          observers: existing.observers || '',
+          waterTemp: existing.waterTemp,
+          salinity: existing.salinity,
+          depth: existing.depth,
+          weatherCondition: existing.weatherCondition || '晴',
+          notes: existing.notes || '',
+          species: (existing.species || []).map(s => ({ ...s }))
+        })
+      }
+    } catch (err) {
+      ElMessage.error('加载数据失败：' + err.message)
+      router.back()
+    } finally {
+      loading.value = false
+    }
+  }
+})
 
 const addSpeciesRecord = () => {
   form.species.push({ speciesId: null, speciesName: '', count: 1, behavior: '' })
@@ -162,12 +226,22 @@ const handleSubmit = async () => {
   }
   submitting.value = true
   try {
-    await dataStore.addObservation({ ...form, createdBy: authStore.user?.name })
-    ElMessage.success('观测记录添加成功')
-    router.push('/observations')
+    if (isEdit.value) {
+      await dataStore.updateObservation(parseInt(route.params.id), { ...form })
+      ElMessage.success('观测记录已更新')
+    } else {
+      await dataStore.addObservation({ ...form, createdBy: authStore.user?.name })
+      ElMessage.success('观测记录添加成功')
+    }
+    // 如果是从生态系统详情页过来的，保存后跳回对应详情页
+    const fromEcoId = route.query.ecosystemId || form.ecosystemId
+    if (fromEcoId) {
+      router.push(`/ecosystems/${fromEcoId}`)
+    } else {
+      router.push('/observations')
+    }
   } catch (err) {
     ElMessage.error('保存失败：' + err.message)
-    console.error(err)
   } finally {
     submitting.value = false
   }

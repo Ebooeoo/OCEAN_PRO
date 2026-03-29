@@ -7,8 +7,8 @@ const PORT = process.env.PORT || 3001
 
 // 中间件
 app.use(cors({ origin: '*' }))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '10mb' }))          // 支持 base64 图片（约 7.5MB 原图）
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // 路由
 app.use('/api/species', require('./routes/species'))

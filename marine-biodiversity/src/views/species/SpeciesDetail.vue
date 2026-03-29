@@ -66,11 +66,27 @@
             <el-tab-pane label="生活习性">
               <p class="detail-text">{{ species.habits || '暂无数据' }}</p>
             </el-tab-pane>
+            <!-- 有视频链接才显示视频资料 Tab -->
+            <el-tab-pane v-if="species.videoUrl" label="🎬 视频资料">
+              <!-- 视频预览卡片：点击弹出播放 -->
+              <div class="video-preview-card" @click="videoDialogVisible = true">
+                <div class="video-preview-content">
+                  <el-icon class="video-preview-icon"><VideoPlay /></el-icon>
+                  <div class="video-preview-info">
+                    <div class="video-preview-title">点击播放视频</div>
+                    <div class="video-preview-url">{{ species.videoUrl }}</div>
+                  </div>
+                </div>
+                <el-button type="primary" size="small" plain @click.stop="openVideoLink">
+                  在新窗口打开 ↗
+                </el-button>
+              </div>
+            </el-tab-pane>
           </el-tabs>
         </el-card>
 
         <!-- 地理分布 -->
-        <el-card class="info-card">
+        <el-card class="info-card" style="margin-bottom: 16px">
           <template #header><span class="sec-title">🗺️ 地理分布</span></template>
           <p class="detail-text" style="margin-bottom: 12px">{{ species.distribution }}</p>
           <div v-if="species.longitude && species.latitude" class="coord-info">
@@ -82,6 +98,59 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 视频播放 Dialog -->
+    <el-dialog
+      v-model="videoDialogVisible"
+      title="🎬 视频资料"
+      width="760px"
+      :close-on-click-modal="true"
+      destroy-on-close
+      class="video-dialog"
+    >
+      <!-- B站 iframe -->
+      <div v-if="bilibiliEmbedUrl" class="video-wrapper">
+        <iframe
+          :src="bilibiliEmbedUrl"
+          scrolling="no"
+          border="0"
+          frameborder="no"
+          framespacing="0"
+          allowfullscreen="true"
+          class="video-iframe"
+        ></iframe>
+      </div>
+
+      <!-- YouTube iframe -->
+      <div v-else-if="youtubeEmbedUrl" class="video-wrapper">
+        <iframe
+          :src="youtubeEmbedUrl"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          class="video-iframe"
+        ></iframe>
+      </div>
+
+      <!-- 原生 video -->
+      <div v-else-if="isDirectVideo" class="video-wrapper">
+        <video controls autoplay class="video-native" :src="species.videoUrl">
+          您的浏览器不支持 video 标签
+        </video>
+      </div>
+
+      <!-- 其他链接 -->
+      <div v-else class="video-external">
+        <el-icon style="font-size:48px; color:#0077b6; margin-bottom:16px"><VideoPlay /></el-icon>
+        <p style="color:#0077b6; word-break:break-all; margin-bottom:16px">{{ species.videoUrl }}</p>
+        <el-button type="primary" @click="openVideoLink">在新窗口打开观看 ↗</el-button>
+      </div>
+
+      <template #footer>
+        <el-button @click="videoDialogVisible = false">关闭</el-button>
+        <el-button type="primary" plain @click="openVideoLink">在新窗口打开 ↗</el-button>
+      </template>
+    </el-dialog>
   </div>
   <el-empty v-else description="物种不存在" />
 </template>
@@ -90,7 +159,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Back, Edit, Delete } from '@element-plus/icons-vue'
+import { Back, Edit, Delete, VideoPlay } from '@element-plus/icons-vue'
 import { useDataStore } from '../../store/data.js'
 import { useAuthStore } from '../../store/auth.js'
 import L from 'leaflet'
@@ -101,8 +170,45 @@ const dataStore = useDataStore()
 const authStore = useAuthStore()
 const mapRef = ref()
 let map = null
+const videoDialogVisible = ref(false)
 
 const species = computed(() => dataStore.getSpeciesById(parseInt(route.params.id)))
+
+// ---- 视频解析 ----
+// 检测是否 B站链接，返回 embed URL（支持 BV 号 / av 号 / 短链）
+const bilibiliEmbedUrl = computed(() => {
+  const url = species.value?.videoUrl || ''
+  if (!url) return ''
+  // 匹配 BV 号
+  const bvMatch = url.match(/BV([a-zA-Z0-9]+)/)
+  if (bvMatch) return `https://player.bilibili.com/player.html?bvid=BV${bvMatch[1]}&autoplay=0`
+  // 匹配 av 号
+  const avMatch = url.match(/av(\d+)/i)
+  if (avMatch) return `https://player.bilibili.com/player.html?aid=${avMatch[1]}&autoplay=0`
+  return ''
+})
+
+// 检测是否 YouTube 链接，返回 embed URL
+const youtubeEmbedUrl = computed(() => {
+  const url = species.value?.videoUrl || ''
+  if (!url) return ''
+  // youtu.be/ID 或 youtube.com/watch?v=ID 或 youtube.com/embed/ID
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
+  if (match) return `https://www.youtube.com/embed/${match[1]}`
+  return ''
+})
+
+// 检测是否直链视频文件
+const isDirectVideo = computed(() => {
+  const url = species.value?.videoUrl || ''
+  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)
+})
+
+// 打开外部链接
+const openVideoLink = () => {
+  window.open(species.value?.videoUrl, '_blank', 'noopener')
+}
+// ---- end 视频解析 ----
 
 const speciesEmoji = (phylum) => {
   const map = {
@@ -224,5 +330,81 @@ const handleDelete = () => {
   height: 200px;
   border-radius: 8px;
   overflow: hidden;
+}
+
+/* 生物特征卡片：tab 内容区固定最小高度，切换 tab 时高度稳定 */
+.info-card :deep(.el-tab-pane) {
+  min-height: 80px;
+}
+
+/* 视频预览卡片（Tab 内的入口） */
+.video-preview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f0f8ff;
+  border: 1px dashed #90caf9;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.video-preview-card:hover {
+  background: #e1f1ff;
+  border-color: #4da6ff;
+}
+.video-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.video-preview-icon {
+  font-size: 28px;
+  color: #0077b6;
+  flex-shrink: 0;
+}
+.video-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+.video-preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0077b6;
+  margin-bottom: 2px;
+}
+.video-preview-url {
+  font-size: 12px;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dialog 内视频区域 */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.video-iframe,
+.video-native {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+.video-external {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  text-align: center;
 }
 </style>

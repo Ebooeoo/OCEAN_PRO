@@ -7,7 +7,7 @@
 
     <el-row :gutter="20">
       <el-col v-for="eco in dataStore.ecosystems" :key="eco.id" :span="8" style="margin-bottom: 20px">
-        <el-card class="eco-card card-hover">
+        <el-card class="eco-card card-hover" style="cursor: pointer" @click="$router.push(`/ecosystems/${eco.id}`)">
           <div class="eco-banner" :class="eco.type">
             <span class="eco-icon">{{ ecoIcons[eco.type] || '🌊' }}</span>
           </div>
@@ -21,9 +21,12 @@
               <span>🐠 {{ getSpecCount(eco.id) }} 种物种</span>
             </div>
           </div>
-          <div v-if="authStore.isAdmin" class="eco-actions">
-            <el-button size="small" @click="openDialog(eco)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(eco)">删除</el-button>
+          <div class="eco-actions" @click.stop>
+            <el-button size="small" type="primary" @click="$router.push(`/ecosystems/${eco.id}`)">查看详情</el-button>
+            <template v-if="authStore.isAdmin">
+              <el-button size="small" @click="openDialog(eco)">编辑</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(eco)">删除</el-button>
+            </template>
           </div>
         </el-card>
       </el-col>

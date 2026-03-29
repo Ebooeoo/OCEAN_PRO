@@ -94,8 +94,28 @@
       <!-- 多媒体与参考 -->
       <el-card style="margin-bottom: 16px">
         <template #header><span class="sec-title">🖼️ 多媒体与参考</span></template>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.imageUrl" placeholder="输入图片链接地址" />
+        <el-form-item label="物种图片">
+          <div class="image-upload-area">
+            <!-- 预览 -->
+            <div v-if="form.imageUrl" class="image-preview">
+              <el-image :src="form.imageUrl" fit="cover" style="width: 160px; height: 120px; border-radius: 8px;" />
+              <el-button size="small" type="danger" @click="form.imageUrl = ''" style="margin-top: 6px">移除图片</el-button>
+            </div>
+            <div v-else class="image-placeholder" @click="triggerImageUpload">
+              <span style="font-size: 32px">📷</span>
+              <span style="font-size: 13px; color: #999; margin-top: 6px">点击上传图片</span>
+              <el-tag type="info" size="small" style="margin-top: 4px">支持 JPG/PNG/WEBP，≤10MB（自动压缩）</el-tag>
+            </div>
+            <input ref="imgFileInput" type="file" accept="image/jpeg,image/png,image/webp"
+              style="display:none" @change="handleImageUpload" />
+          </div>
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px">
+            <el-button size="small" @click="triggerImageUpload" :loading="imgUploading">
+              {{ form.imageUrl ? '重新上传' : '本地上传' }}
+            </el-button>
+            <span style="color: #999; font-size: 12px">或</span>
+            <el-input v-model="form.imageUrl" placeholder="粘贴图片URL地址" size="small" style="flex: 1" />
+          </div>
         </el-form-item>
         <el-form-item label="视频链接">
           <el-input v-model="form.videoUrl" placeholder="输入视频链接地址" />
@@ -133,6 +153,8 @@ const authStore = useAuthStore()
 const formRef = ref()
 const submitting = ref(false)
 const isEdit = computed(() => !!route.params.id)
+const imgFileInput = ref()
+const imgUploading = ref(false)
 
 const form = reactive({
   chineseName: '', latinName: '', phylum: '', class: '', order: '',
@@ -176,6 +198,73 @@ onMounted(async () => {
   }
 })
 
+// 图片本地上传（转base64，自动压缩到 ≤1MB）
+const triggerImageUpload = () => {
+  if (!imgFileInput.value) {
+    ElMessage.error('上传组件未就绪，请刷新页面重试')
+    return
+  }
+  imgFileInput.value.click()
+}
+
+// 将图片压缩到目标尺寸（canvas重绘）
+const compressImage = (dataUrl, maxWidth = 1200, quality = 0.85) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      let { width, height } = img
+      // 超宽才等比缩小
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width)
+        width = maxWidth
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = () => resolve(dataUrl) // 压缩失败就用原图
+    img.src = dataUrl
+  })
+}
+
+const handleImageUpload = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning('图片不能超过 10MB')
+    e.target.value = ''
+    return
+  }
+  imgUploading.value = true
+  const reader = new FileReader()
+  reader.onload = async (ev) => {
+    try {
+      let dataUrl = ev.target.result
+      // 超过 1MB base64 就自动压缩
+      if (dataUrl.length > 1024 * 1024) {
+        ElMessage.info('图片较大，正在自动压缩...')
+        dataUrl = await compressImage(dataUrl)
+      }
+      form.imageUrl = dataUrl
+      ElMessage.success('图片加载成功')
+    } catch (err) {
+      ElMessage.error('图片处理失败，请重试')
+      console.error(err)
+    } finally {
+      imgUploading.value = false
+    }
+  }
+  reader.onerror = () => {
+    ElMessage.error('文件读取失败，请重试')
+    imgUploading.value = false
+  }
+  reader.readAsDataURL(file)
+  e.target.value = ''
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
   let valid = false
@@ -218,6 +307,38 @@ const handleSubmit = async () => {
 }
 .page-header h2 { font-size: 18px; color: #03045e; }
 .sec-title { font-weight: 600; color: #03045e; }
+
+.image-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image-placeholder {
+  width: 160px;
+  height: 120px;
+  border: 2px dashed #cce7ff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f0f8ff;
+  transition: all 0.2s;
+}
+
+.image-placeholder:hover {
+  border-color: #0077b6;
+  background: #e0f0ff;
+}
+
 .form-actions {
   text-align: center;
   padding: 16px;

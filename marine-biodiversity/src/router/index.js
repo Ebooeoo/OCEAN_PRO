@@ -66,10 +66,22 @@ const routes = [
         meta: { title: '观测详情' }
       },
       {
+        path: 'observations/:id/edit',
+        name: 'ObservationEdit',
+        component: () => import('../views/observation/ObservationForm.vue'),
+        meta: { title: '编辑观测记录', requiresRole: ['admin', 'researcher'] }
+      },
+      {
         path: 'ecosystems',
         name: 'Ecosystems',
         component: () => import('../views/Ecosystems.vue'),
         meta: { title: '生态系统', icon: 'TreeFilled' }
+      },
+      {
+        path: 'ecosystems/:id',
+        name: 'EcosystemDetail',
+        component: () => import('../views/EcosystemDetail.vue'),
+        meta: { title: '生态系统详情' }
       },
       {
         path: 'map',

@@ -42,6 +42,20 @@
           </el-col>
           <el-col :span="24" style="margin-top: 20px">
             <el-card>
+              <template #header>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span class="chart-title">观测活动时间趋势</span>
+                  <el-radio-group v-model="timeDimension" size="small" @change="refreshObsCharts">
+                    <el-radio-button value="month">按月</el-radio-button>
+                    <el-radio-button value="year">按年</el-radio-button>
+                  </el-radio-group>
+                </div>
+              </template>
+              <div ref="timelineRef" class="chart-lg"></div>
+            </el-card>
+          </el-col>
+          <el-col :span="24" style="margin-top: 20px">
+            <el-card>
               <template #header><span class="chart-title">观测人员活动统计</span></template>
               <div ref="personRef" class="chart-md"></div>
             </el-card>
@@ -57,12 +71,26 @@
               <div class="export-icon">{{ exp.icon }}</div>
               <h3>{{ exp.title }}</h3>
               <p>{{ exp.desc }}</p>
-              <el-button type="primary" @click="handleExport(exp.type)" style="margin-top: 16px">
-                导出 {{ exp.format }}
-              </el-button>
+              <div class="export-btns">
+                <el-button type="primary" @click="handleExport(exp.type, 'xlsx')" style="margin-top: 12px">
+                  导出 Excel
+                </el-button>
+                <el-button @click="handleExport(exp.type, 'csv')" style="margin-top: 12px">
+                  导出 CSV
+                </el-button>
+              </div>
             </el-card>
           </el-col>
         </el-row>
+        <el-card style="margin-top: 20px">
+          <template #header><span class="chart-title">💡 导出说明</span></template>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="物种数据">包含：中文名、学名、分类学、保护等级、濒危状态、分布区域、录入人等</el-descriptions-item>
+            <el-descriptions-item label="观测记录">包含：主题、时间、坐标、生态系统、环境参数、关联物种数等</el-descriptions-item>
+            <el-descriptions-item label="统计报告">包含：物种统计、生态系统统计、观测次数趋势等摘要数据</el-descriptions-item>
+            <el-descriptions-item label="格式说明">Excel(.xlsx)：包含格式化表头，适合汇报；CSV：纯文本，适合数据处理</el-descriptions-item>
+          </el-descriptions>
+        </el-card>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -71,11 +99,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
 import { useDataStore } from '../store/data.js'
 
 const dataStore = useDataStore()
 const activeTab = ref('species')
+const timeDimension = ref('month')
 
 const prot1Ref = ref()
 const endRef = ref()
@@ -83,6 +113,7 @@ const phylumRef = ref()
 const ecoObsRef = ref()
 const ecoSpecRef = ref()
 const personRef = ref()
+const timelineRef = ref()
 let charts = []
 
 const disposeAll = () => { charts.forEach(c => c.dispose()); charts = [] }
@@ -132,6 +163,29 @@ const initSpeciesCharts = () => {
   })
 }
 
+// 观测时间趋势统计
+const getTimelineData = () => {
+  const dim = timeDimension.value
+  const map = {}
+  dataStore.observations.forEach(o => {
+    if (!o.observedAt) return
+    const date = new Date(o.observedAt)
+    if (isNaN(date.getTime())) return
+    const key = dim === 'month'
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      : `${date.getFullYear()}`
+    map[key] = (map[key] || 0) + 1
+  })
+  // 按时间排序
+  const sorted = Object.entries(map).sort((a, b) => a[0] > b[0] ? 1 : -1)
+  return { labels: sorted.map(e => e[0]), values: sorted.map(e => e[1]) }
+}
+
+const refreshObsCharts = async () => {
+  await nextTick()
+  initObsCharts()
+}
+
 const initObsCharts = () => {
   // 各生态系统观测次数
   const ecoObs = {}
@@ -169,12 +223,33 @@ const initObsCharts = () => {
     }]
   })
 
+  // 时间趋势折线图
+  const tl = getTimelineData()
+  const c_tl = echarts.init(timelineRef.value)
+  charts.push(c_tl)
+  c_tl.setOption({
+    tooltip: { trigger: 'axis', formatter: (params) => `${params[0].name}<br/>观测次数：${params[0].value}` },
+    grid: { left: '5%', right: '5%', bottom: '12%', top: '15%', containLabel: true },
+    xAxis: { type: 'category', data: tl.labels, axisLabel: { rotate: tl.labels.length > 12 ? 30 : 0, fontSize: 11 } },
+    yAxis: { type: 'value', name: '观测次数', minInterval: 1 },
+    series: [{
+      type: 'line',
+      data: tl.values,
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 8,
+      lineStyle: { color: '#0077b6', width: 2 },
+      itemStyle: { color: '#0077b6' },
+      areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(0,119,182,0.3)'},{offset:1,color:'rgba(0,119,182,0.02)'}]) }
+    }]
+  })
+
   // 人员统计
   const personObs = {}
   dataStore.observations.forEach(o => {
     o.observers?.split(',').forEach(p => {
       const name = p.trim()
-      personObs[name] = (personObs[name] || 0) + 1
+      if (name) personObs[name] = (personObs[name] || 0) + 1
     })
   })
   const c6 = echarts.init(personRef.value)
@@ -183,7 +258,7 @@ const initObsCharts = () => {
     tooltip: { trigger: 'axis' },
     grid: { left: '5%', right: '5%', bottom: '10%', top: '10%', containLabel: true },
     xAxis: { type: 'category', data: Object.keys(personObs) },
-    yAxis: { type: 'value', name: '观测次数' },
+    yAxis: { type: 'value', name: '观测次数', minInterval: 1 },
     series: [{ type: 'bar', data: Object.values(personObs),
       itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f77f00'},{offset:1,color:'#ffd166'}]), borderRadius: [4,4,0,0] }
     }]
@@ -199,7 +274,6 @@ watch(activeTab, async (tab) => {
 })
 
 onMounted(async () => {
-  // 若数据尚未加载（如直接刷新进入Analytics），主动拉取
   if (!dataStore.species.length || !dataStore.observations.length) {
     await dataStore.loadAll()
   }
@@ -210,47 +284,120 @@ onMounted(async () => {
 onUnmounted(disposeAll)
 
 const exportOptions = [
-  { title: '物种数据报表', desc: '导出所有物种信息，包含分类、分布、保护等级等完整数据', icon: '🐠', type: 'species', format: 'CSV' },
-  { title: '观测记录报表', desc: '导出全部观测记录，包含环境参数和关联物种信息', icon: '📍', type: 'observations', format: 'CSV' },
-  { title: '统计分析报告', desc: '导出系统统计摘要，包含各维度的统计数据', icon: '📊', type: 'summary', format: 'TXT' }
+  { title: '物种数据报表', desc: '导出所有物种信息，包含分类、分布、保护等级等完整数据', icon: '🐠', type: 'species' },
+  { title: '观测记录报表', desc: '导出全部观测记录，包含环境参数和关联物种信息', icon: '📍', type: 'observations' },
+  { title: '统计分析报告', desc: '导出系统统计摘要，包含各维度的统计数据', icon: '📊', type: 'summary' }
 ]
 
-const handleExport = (type) => {
-  let content = ''
-  let filename = ''
-  
+// ===== Excel 导出（使用 xlsx 库） =====
+const exportToExcel = (type) => {
+  let ws, filename
+
+  if (type === 'species') {
+    const headers = ['ID', '中文名', '学名', '门', '纲', '目', '科', '属', '种', '保护等级', '濒危状态', '分布区域', '经度', '纬度', '录入人', '录入时间']
+    const rows = dataStore.species.map(s => [
+      s.id, s.chineseName, s.latinName, s.phylum, s.class, s.order, s.family, s.genus, s.species,
+      s.protectionLevel, s.endangeredStatus, s.distribution, s.longitude, s.latitude, s.createdBy, s.createdAt
+    ])
+    ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    filename = `物种数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`
+    // 设置列宽
+    ws['!cols'] = [
+      {wch:8},{wch:14},{wch:24},{wch:14},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},
+      {wch:12},{wch:10},{wch:24},{wch:10},{wch:10},{wch:10},{wch:12}
+    ]
+  } else if (type === 'observations') {
+    const headers = ['ID', '观测主题', '观测时间', '生态系统', '经度', '纬度', '观测人员', '水温(°C)', '盐度(‰)', '深度(m)', '天气', '关联物种数', '备注']
+    const rows = dataStore.observations.map(o => [
+      o.id, o.title, o.observedAt, o.ecosystemName, o.longitude, o.latitude, o.observers,
+      o.waterTemp, o.salinity, o.depth, o.weatherCondition, o.species?.length || 0, o.notes
+    ])
+    ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    filename = `观测记录_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`
+    ws['!cols'] = [
+      {wch:8},{wch:24},{wch:18},{wch:16},{wch:10},{wch:10},{wch:16},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:30}
+    ]
+  } else {
+    // 统计报告：多Sheet Excel
+    const wb = XLSX.utils.book_new()
+
+    // Sheet 1: 物种统计
+    const sp = dataStore.protectionStats
+    const wsStats = XLSX.utils.aoa_to_sheet([
+      ['指标', '数值'],
+      ['物种总数', dataStore.speciesCount],
+      ['观测总次数', dataStore.observationCount],
+      ['生态系统数', dataStore.ecosystemCount],
+      [''],
+      ['=== 保护等级统计 ==='],
+      ...Object.entries(sp).map(([k, v]) => [k, v]),
+      [''],
+      ['=== 濒危状态统计 ==='],
+      ...Object.entries(dataStore.endangeredStats).map(([k, v]) => [k, v]),
+    ])
+    XLSX.utils.book_append_sheet(wb, wsStats, '统计概览')
+
+    // Sheet 2: 时间趋势
+    const tl = getTimelineData()
+    const wsTl = XLSX.utils.aoa_to_sheet([
+      ['时间', '观测次数'],
+      ...tl.labels.map((l, i) => [l, tl.values[i]])
+    ])
+    XLSX.utils.book_append_sheet(wb, wsTl, '观测时间趋势')
+
+    XLSX.writeFile(wb, `统计报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`)
+    ElMessage.success('统计报告已导出')
+    return
+  }
+
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+  XLSX.writeFile(wb, filename)
+  ElMessage.success('Excel 文件已导出：' + filename)
+}
+
+// ===== CSV 导出 =====
+const exportToCsv = (type) => {
+  let content = '', filename = ''
   if (type === 'species') {
     const headers = ['ID', '中文名', '学名', '门', '纲', '保护等级', '濒危状态', '分布区域', '录入人', '录入时间']
     const rows = dataStore.species.map(s => [s.id, s.chineseName, s.latinName, s.phylum, s.class, s.protectionLevel, s.endangeredStatus, s.distribution, s.createdBy, s.createdAt])
-    content = [headers, ...rows].map(r => r.join(',')).join('\n')
-    filename = '物种数据_' + new Date().toLocaleDateString() + '.csv'
+    content = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    filename = `物种数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.csv`
   } else if (type === 'observations') {
     const headers = ['ID', '主题', '观测时间', '生态系统', '经度', '纬度', '观测人员', '水温', '盐度', '关联物种数']
     const rows = dataStore.observations.map(o => [o.id, o.title, o.observedAt, o.ecosystemName, o.longitude, o.latitude, o.observers, o.waterTemp, o.salinity, o.species?.length || 0])
-    content = [headers, ...rows].map(r => r.join(',')).join('\n')
-    filename = '观测记录_' + new Date().toLocaleDateString() + '.csv'
+    content = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    filename = `观测记录_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.csv`
   } else {
-    content = `海洋生物多样性信息管理系统 - 统计报告\n生成时间: ${new Date().toLocaleString()}\n\n` +
-      `=== 物种统计 ===\n总物种数: ${dataStore.speciesCount}\n` +
-      Object.entries(dataStore.protectionStats).map(([k,v]) => `${k}: ${v}种`).join('\n') +
-      `\n\n=== 观测统计 ===\n总观测次数: ${dataStore.observationCount}\n`
-    filename = '统计报告_' + new Date().toLocaleDateString() + '.txt'
+    const tl = getTimelineData()
+    content = `海洋生物多样性信息管理系统 - 统计报告\n生成时间: ${new Date().toLocaleString('zh-CN')}\n\n` +
+      `物种总数,${dataStore.speciesCount}\n观测总次数,${dataStore.observationCount}\n生态系统数,${dataStore.ecosystemCount}\n\n` +
+      `=== 保护等级统计 ===\n` + Object.entries(dataStore.protectionStats).map(([k,v]) => `${k},${v}`).join('\n') +
+      `\n\n=== 观测时间趋势 ===\n时间,次数\n` + tl.labels.map((l,i) => `${l},${tl.values[i]}`).join('\n')
+    filename = `统计报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.csv`
   }
-  
-  const blob = new Blob(['\ufeff' + content], { type: 'text/plain;charset=utf-8' })
+  const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
   a.download = filename
   a.click()
-  ElMessage.success('导出成功：' + filename)
+  ElMessage.success('CSV 文件已导出：' + filename)
+}
+
+const handleExport = (type, format) => {
+  if (format === 'xlsx') exportToExcel(type)
+  else exportToCsv(type)
 }
 </script>
 
 <style scoped>
 .chart-title { font-weight: 600; color: #03045e; }
 .chart-md { height: 280px; }
-.export-card { text-align: center; padding: 10px; }
+.chart-lg { height: 320px; }
+.export-card { text-align: center; padding: 10px; min-height: 200px; }
 .export-icon { font-size: 48px; margin-bottom: 12px; }
 .export-card h3 { font-size: 16px; color: #03045e; margin-bottom: 8px; }
 .export-card p { font-size: 13px; color: #666; line-height: 1.6; }
+.export-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 </style>

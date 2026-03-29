@@ -32,7 +32,7 @@
     <!-- 观测记录卡片列表 -->
     <div class="obs-list">
       <el-card
-        v-for="obs in filteredObs"
+        v-for="obs in pagedObs"
         :key="obs.id"
         class="obs-card card-hover"
         @click="$router.push(`/observations/${obs.id}`)"
@@ -76,11 +76,26 @@
         
         <div class="obs-footer" v-if="authStore.canEdit" @click.stop>
           <el-button size="small" @click="$router.push(`/observations/${obs.id}`)">详情</el-button>
+          <el-button size="small" type="primary" @click="$router.push(`/observations/${obs.id}/edit`)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(obs)">删除</el-button>
         </div>
       </el-card>
       
       <el-empty v-if="!filteredObs.length" description="暂无观测记录" />
+    </div>
+
+    <!-- 分页 -->
+    <div class="obs-pagination" v-if="filteredObs.length > pageSize">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[5, 10, 20, 50]"
+        :total="filteredObs.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @current-change="() => {}"
+        @size-change="() => { currentPage = 1 }"
+      />
     </div>
   </div>
 </template>
@@ -96,6 +111,8 @@ const dataStore = useDataStore()
 const authStore = useAuthStore()
 const searchText = ref('')
 const filterEcosystem = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const filteredObs = computed(() => {
   let list = [...dataStore.observations]
@@ -106,7 +123,12 @@ const filteredObs = computed(() => {
   if (filterEcosystem.value) {
     list = list.filter(o => o.ecosystemId === filterEcosystem.value)
   }
-  return list.reverse()
+  return list
+})
+
+const pagedObs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredObs.value.slice(start, start + pageSize.value)
 })
 
 const obsStats = computed(() => [
@@ -205,4 +227,10 @@ const handleDelete = (obs) => {
   border-top: 1px solid #f0f8ff;
   padding-top: 12px;
 }
+
+.obs-pagination {
+  margin-top: 20px;
+  text-align: center;
+}
 </style>
+

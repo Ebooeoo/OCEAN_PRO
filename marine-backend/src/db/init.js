@@ -27,7 +27,7 @@ async function initDB() {
       role ENUM('admin','researcher','student','public') NOT NULL DEFAULT 'public',
       name VARCHAR(100),
       email VARCHAR(100),
-      avatar TEXT,
+      avatar LONGTEXT,
       status TINYINT DEFAULT 1,
       created_at DATE DEFAULT (CURDATE())
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -66,8 +66,8 @@ async function initDB() {
       latitude DECIMAL(10,6),
       protection_level VARCHAR(50) DEFAULT '无',
       endangered_status VARCHAR(10) DEFAULT 'LC',
-      image_url TEXT,
-      video_url TEXT,
+      image_url LONGTEXT,
+      video_url LONGTEXT,
       references_text TEXT,
       created_by VARCHAR(100),
       created_at DATE DEFAULT (CURDATE()),
@@ -113,6 +113,23 @@ async function initDB() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `)
   console.log('✅ 表 observation_species 已创建')
+
+  // 建表：用户注册申请（支持学生/公众自助注册审核）
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS user_applications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100),
+      username VARCHAR(50) NOT NULL UNIQUE,
+      email VARCHAR(100),
+      password VARCHAR(255) NOT NULL,
+      role ENUM('student','public') NOT NULL DEFAULT 'student',
+      status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+      apply_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+      apply_ip VARCHAR(50),
+      review_remark VARCHAR(200)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `)
+  console.log('✅ 表 user_applications 已创建')
 
   // 建表：活动日志
   await conn.query(`
