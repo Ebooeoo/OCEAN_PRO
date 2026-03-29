@@ -1,0 +1,42 @@
+services:
+  # ===== 后端 Node.js 服务 =====
+  - type: web
+    name: marine-biodiversity-backend
+    runtime: node
+    rootDir: marine-backend
+    buildCommand: npm install
+    startCommand: node src/app.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: marine-biodiversity-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: marine-biodiversity-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: marine-biodiversity-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: marine-biodiversity-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: marine-biodiversity-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+
+  # ===== MySQL 数据库 =====
+databases:
+  - name: marine-biodiversity-db
+    databaseName: marine_biodiversity
+    user: marine_user
